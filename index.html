@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="FinCore — plataforma de gestão financeira pessoal" />
+    <meta name="color-scheme" content="dark light" />
+    <title>FinCore</title>
+    <!-- Aplica o tema salvo antes da primeira pintura (evita flash de tema). Só lê preferência visual. -->
+    <script>
+      (function () {
+        try {
+          var stored = JSON.parse(localStorage.getItem('fincore:theme') || 'null');
+          var pref = (stored && stored.state && stored.state.preference) || 'dark';
+          var dark =
+            pref === 'dark' ||
+            (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', dark);
+        } catch (_) {
+          /* mantém o tema escuro padrão */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

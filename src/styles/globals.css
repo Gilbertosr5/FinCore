@@ -1,0 +1,215 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/*
+ * FinCore Design Tokens
+ * ---------------------------------------------------------------------------
+ * Todas as cores da aplicação vêm daqui. Componentes usam apenas os tokens
+ * semânticos (bg-background, text-muted-foreground, bg-success...). Nenhum
+ * componente deve conter códigos hexadecimais.
+ *
+ * Tema escuro é o principal (classe .dark no <html>); o claro é alternativo.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Paleta base (primitivas) — referenciada somente pelos tokens semânticos. */
+:root {
+  --palette-ink-950: #0b1020;
+  --palette-ink-900: #111827;
+  --palette-ink-800: #172033;
+  --palette-ink-700: #273449;
+  --palette-ink-600: #3a4a63;
+  --palette-slate-400: #94a3b8;
+  --palette-slate-500: #64748b;
+  --palette-slate-50: #f8fafc;
+  --palette-slate-100: #f1f5f9;
+  --palette-slate-200: #e2e8f0;
+  --palette-slate-300: #cbd5e1;
+  --palette-slate-700: #334155;
+  --palette-slate-900: #0f172a;
+  --palette-white: #ffffff;
+
+  --palette-violet-500: #7c5cfc;
+  --palette-violet-600: #6847e8;
+  --palette-violet-400: #a78bfa;
+  --palette-violet-100: #ede9fe;
+
+  --palette-green-500: #22c55e;
+  --palette-green-600: #16a34a;
+  --palette-amber-500: #f59e0b;
+  --palette-amber-600: #d97706;
+  --palette-red-500: #ef4444;
+  --palette-red-600: #dc2626;
+  --palette-sky-500: #0ea5e9;
+  --palette-pink-500: #ec4899;
+}
+
+/* Tema claro (alternativo) */
+:root {
+  --radius: 0.75rem;
+
+  --background: var(--palette-slate-50);
+  --foreground: var(--palette-slate-900);
+  --surface: var(--palette-white);
+  --surface-foreground: var(--palette-slate-900);
+  --card: var(--palette-white);
+  --card-foreground: var(--palette-slate-900);
+  --popover: var(--palette-white);
+  --popover-foreground: var(--palette-slate-900);
+
+  --primary: var(--palette-violet-600);
+  --primary-foreground: var(--palette-white);
+  --secondary: var(--palette-violet-100);
+  --secondary-foreground: var(--palette-violet-600);
+  --muted: var(--palette-slate-100);
+  --muted-foreground: var(--palette-slate-500);
+  --accent: var(--palette-slate-100);
+  --accent-foreground: var(--palette-slate-900);
+
+  --success: var(--palette-green-600);
+  --success-foreground: var(--palette-white);
+  --warning: var(--palette-amber-600);
+  --warning-foreground: var(--palette-white);
+  --destructive: var(--palette-red-600);
+  --destructive-foreground: var(--palette-white);
+
+  --border: var(--palette-slate-200);
+  --input: var(--palette-slate-300);
+  --ring: var(--palette-violet-500);
+
+  --sidebar: var(--palette-white);
+  --sidebar-foreground: var(--palette-slate-700);
+  --sidebar-accent: var(--palette-violet-100);
+  --sidebar-accent-foreground: var(--palette-violet-600);
+  --sidebar-border: var(--palette-slate-200);
+
+  --chart-1: var(--palette-violet-500);
+  --chart-2: var(--palette-green-500);
+  --chart-3: var(--palette-amber-500);
+  --chart-4: var(--palette-sky-500);
+  --chart-5: var(--palette-pink-500);
+}
+
+/* Tema escuro (principal) */
+.dark {
+  --background: var(--palette-ink-950);
+  --foreground: var(--palette-slate-50);
+  --surface: var(--palette-ink-900);
+  --surface-foreground: var(--palette-slate-50);
+  --card: var(--palette-ink-800);
+  --card-foreground: var(--palette-slate-50);
+  --popover: var(--palette-ink-800);
+  --popover-foreground: var(--palette-slate-50);
+
+  --primary: var(--palette-violet-500);
+  --primary-foreground: var(--palette-white);
+  --secondary: var(--palette-ink-700);
+  --secondary-foreground: var(--palette-violet-400);
+  --muted: var(--palette-ink-900);
+  --muted-foreground: var(--palette-slate-400);
+  --accent: var(--palette-ink-700);
+  --accent-foreground: var(--palette-slate-50);
+
+  --success: var(--palette-green-500);
+  --success-foreground: var(--palette-ink-950);
+  --warning: var(--palette-amber-500);
+  --warning-foreground: var(--palette-ink-950);
+  --destructive: var(--palette-red-500);
+  --destructive-foreground: var(--palette-white);
+
+  --border: var(--palette-ink-700);
+  --input: var(--palette-ink-600);
+  --ring: var(--palette-violet-400);
+
+  --sidebar: var(--palette-ink-900);
+  --sidebar-foreground: var(--palette-slate-400);
+  --sidebar-accent: var(--palette-ink-800);
+  --sidebar-accent-foreground: var(--palette-slate-50);
+  --sidebar-border: var(--palette-ink-700);
+
+  --chart-1: var(--palette-violet-500);
+  --chart-2: var(--palette-green-500);
+  --chart-3: var(--palette-amber-500);
+  --chart-4: var(--palette-sky-500);
+  --chart-5: var(--palette-pink-500);
+}
+
+/* Exposição dos tokens como utilitários do Tailwind (bg-*, text-*, border-*...). */
+@theme inline {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Code', Menlo, monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-foreground: var(--surface-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    font-feature-settings: 'tnum' 1; /* algarismos tabulares: valores monetários alinhados */
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
