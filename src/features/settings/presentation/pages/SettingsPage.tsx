@@ -8,7 +8,9 @@ import { ROUTES } from '@/constants/routes';
 import { ChangePasswordForm, getUserInitials, useCurrentUser, useLogout } from '@/features/auth';
 
 import { AppearanceSettings } from '../components/AppearanceSettings';
+import { DemoDataSettings } from '../components/DemoDataSettings';
 import { SettingsSection } from '../components/SettingsSection';
+import { useDemoDataManager } from '../context/demo-data-context';
 
 const UPCOMING = [
   'Moeda principal, formato de data e fuso horário',
@@ -22,6 +24,7 @@ export function SettingsPage() {
   const { data: user } = useCurrentUser();
   const logout = useLogout();
   const navigate = useNavigate();
+  const demoData = useDemoDataManager();
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -86,6 +89,15 @@ export function SettingsPage() {
           </div>
         </div>
       </SettingsSection>
+
+      {demoData && (
+        <SettingsSection
+          title="Ambiente de demonstração"
+          description="Dados fictícios guardados apenas neste navegador (IndexedDB)."
+        >
+          <DemoDataSettings manager={demoData} />
+        </SettingsSection>
+      )}
 
       <SettingsSection
         title="Em breve"

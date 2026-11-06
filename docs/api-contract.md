@@ -54,3 +54,57 @@ Suportado nativamente pelo Spring Boot 3 (`ProblemDetail`,
 Mutações (operações financeiras) **nunca** são reenviadas automaticamente, para
 evitar lançamentos duplicados. Recomenda-se que o backend aceite um header
 `Idempotency-Key` em operações de criação (a ser detalhado na Fase 4).
+
+## Recursos de leitura usados pelo dashboard (Fase 3)
+
+Cada `Api*Repository` já consome os endpoints abaixo e valida cada item com o
+mesmo schema Zod usado no IndexedDB de demonstração. Todos retornam um array
+JSON (paginação e filtros no servidor serão definidos nas fases de cada módulo).
+Regras de contabilização que o backend deve respeitar:
+[ADR 0007](./adr/0007-regras-financeiras-e-contabilizacao.md).
+
+| Método | Caminho                   | Item                                                                                                    |
+| ------ | ------------------------- | ------------------------------------------------------------------------------------------------------- |
+| GET    | `/accounts`               | `{ id, name, type, institution, initialBalance, initialBalanceDate, archived }`                         |
+| GET    | `/categories`             | `{ id, name, kind: "income"\|"expense", nature: "fixed"\|"variable" }`                                  |
+| GET    | `/transactions`           | ver abaixo                                                                                              |
+| GET    | `/credit-cards`           | `{ id, name, institution, brand, limit, closingDay, dueDay, paymentAccountId, status }`                 |
+| GET    | `/credit-cards/purchases` | `{ id, cardId, description, categoryId, totalAmount, purchaseDate, installmentCount, status }`          |
+| GET    | `/budgets`                | `{ id, name, categoryId, amount, period: "monthly"\|"yearly", alertThresholdPercent, active }`          |
+| GET    | `/goals`                  | `{ id, name, description, category, targetAmount, startDate, targetDate, priority, accountId, status }` |
+| GET    | `/goals/contributions`    | `{ id, goalId, date, amount, type: "deposit"\|"withdrawal" }`                                           |
+| GET    | `/investments/assets`     | `{ id, name, ticker, assetClass, institution, notes }`                                                  |
+| GET    | `/investments/movements`  | `{ id, assetId, type, date, quantity, amount }`                                                         |
+| GET    | `/investments/valuations` | `{ id, assetId, date, value, source: "manual"\|"market_quote"\|"estimate" }`                            |
+
+### Transação
+
+```json
+{
+  "id": "tx-123",
+  "kind": "expense",
+  "description": "Aluguel",
+  "amount": "2200.00",
+  "accountId": "acc-1",
+  "categoryId": "cat-moradia",
+  "competenceDate": "2026-11-10",
+  "dueDate": "2026-11-10",
+  "paidDate": null,
+  "status": "pending",
+  "transfer": null,
+  "cardPayment": null,
+  "investment": null,
+  "recurrenceId": "rec-aluguel",
+  "installment": null,
+  "tags": [],
+  "notes": null
+}
+```
+
+- `kind`: `income` | `expense` | `transfer` | `card_payment` | `investment`.
+- `transfer` (obrigatório se `kind = transfer`): `{ id, direction: "in"|"out", counterpartAccountId }` — as duas pernas compartilham `id`.
+- `cardPayment` (obrigatório se `kind = card_payment`): `{ cardId, invoiceMonth: "YYYY-MM" }`.
+- `investment` (obrigatório se `kind = investment`): `{ assetId, direction: "application"|"redemption" }`.
+- `amount` é sempre positivo.
+
+Faturas **não** são um recurso: são derivadas das compras e dos pagamentos.

@@ -36,6 +36,33 @@ export function formatMoney(money: Money, options: FormatMoneyOptions = {}): str
   );
 }
 
+const compactFormatter = new Intl.NumberFormat(LOCALE, {
+  style: 'currency',
+  currency: DEFAULT_CURRENCY,
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+
+/**
+ * Formato compacto para eixos de gráfico: 12345 → "R$ 12,3 mil".
+ * Recebe `number` porque eixos já operam em escala de exibição; nunca use em
+ * valores que serão somados ou comparados.
+ */
+export function formatCompactCurrency(value: number): string {
+  return compactFormatter.format(value);
+}
+
+const percentFormatter = new Intl.NumberFormat(LOCALE, {
+  style: 'percent',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 1,
+});
+
+/** 80 → "80%"; 12.5 → "12,5%" (recebe pontos percentuais). */
+export function formatPercent(percentPoints: number): string {
+  return percentFormatter.format(percentPoints / 100);
+}
+
 /**
  * Converte texto digitado pelo usuário em Money.
  * Aceita: "1.234,56", "1234,56", "R$ 1.234,56", "-50", "0,5", "1234.56" (ponto decimal

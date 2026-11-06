@@ -21,7 +21,7 @@ sem reestruturação.
 | ---- | ---------------------------------------------------------------------------- | ------------ |
 | 1    | Fundação arquitetural, design tokens, qualidade, núcleo monetário e de datas | ✅ Concluída |
 | 2    | Autenticação (adaptadores dev/REST), rotas protegidas, layout completo       | ✅ Concluída |
-| 3    | Dashboard com indicadores e gráficos                                         | ⏳           |
+| 3    | Dashboard com indicadores e gráficos                                         | ✅ Concluída |
 | 4    | Receitas, despesas, contas, transferências, recorrências, parcelamentos      | ⏳           |
 | 5    | Cartões, faturas, orçamentos e alertas                                       | ⏳           |
 | 6    | Metas e planejamento financeiro                                              | ⏳           |
@@ -33,10 +33,10 @@ sem reestruturação.
 
 React 19 · TypeScript 6 (strict) · Vite 8 · React Router 8 · TanStack Query 5 ·
 Zustand 5 · React Hook Form + Zod 4 · Tailwind CSS 4 · shadcn/ui (Radix) ·
-Lucide · Axios · date-fns 4 · decimal.js · Vitest 5 + Testing Library ·
-Playwright · ESLint 9 + Prettier.
+Lucide · Axios · date-fns 4 · decimal.js · Recharts 3 · Dexie 4 (IndexedDB) ·
+Vitest 5 + Testing Library · Playwright · ESLint 9 + Prettier.
 
-Recharts e Dexie (IndexedDB) entram nas fases em que são usados.
+Biblioteca de PDF entra na Fase 8.
 Justificativas de versão em [ADR 0002](./docs/adr/0002-stack-e-versoes.md).
 
 ## Arquitetura
@@ -66,17 +66,27 @@ fincore/
 ├── public/
 ├── src/
 │   ├── app/
+│   │   ├── composition/   # escolha mock × API de todos os repositórios
 │   │   ├── config/        # validação das variáveis de ambiente (Zod)
+│   │   ├── demo-data/     # seed determinístico de demonstração
 │   │   ├── layout/        # AppLayout (shell autenticado)
-│   │   ├── providers/     # Theme, Query, Auth e composição de providers
+│   │   ├── providers/     # Theme, Query, Auth, Data e composição de providers
 │   │   └── router/        # rotas, ProtectedRoute, GuestRoute
 │   ├── components/
 │   │   ├── ui/            # design system (padrão shadcn/ui)
 │   │   ├── layout/        # Sidebar, Header, busca global, notificações
+│   │   ├── data-display/  # cartões de indicador, gráficos (moldura + tabela), progresso
 │   │   └── feedback/      # loaders, erros, telas de status
 │   ├── constants/         # rotas, navegação, chaves de storage
 │   ├── features/
 │   │   ├── auth/          # domain / application / infrastructure / presentation
+│   │   ├── accounts/      # contas e saldos
+│   │   ├── transactions/  # movimentações, categorias, regras de contabilização
+│   │   ├── credit-cards/  # cartões, parcelas e faturas
+│   │   ├── budgets/       # orçamentos e consumo
+│   │   ├── goals/         # metas e progresso
+│   │   ├── investments/   # carteira e avaliações
+│   │   ├── dashboard/     # agregação, período, alertas e tela
 │   │   └── settings/      # configurações do usuário
 │   ├── hooks/
 │   ├── lib/
@@ -84,10 +94,12 @@ fincore/
 │   │   ├── dates/         # IsoDate: datas de calendário sem bugs de fuso
 │   │   ├── errors/        # DomainError e mensagens seguras para o usuário
 │   │   ├── forms/         # integração de erros da API com formulários
+│   │   ├── schemas/       # campos e validação de registros/DTOs (Zod)
 │   │   └── query-client.ts
 │   ├── services/
 │   │   ├── api/           # cliente HTTP (Axios), refresh de sessão, erros
-│   │   └── auth/          # eventos de sessão
+│   │   ├── auth/          # eventos de sessão
+│   │   └── storage/       # IndexedDB de demonstração (Dexie)
 │   ├── stores/            # Zustand (tema, interface)
 │   ├── styles/            # globals.css com design tokens
 │   ├── App.tsx
@@ -159,10 +171,14 @@ de configuração. Variáveis `VITE_*` são públicas — nunca coloque segredos
 - **Unitários** junto ao código (`*.test.ts`): `Money`, formatação/parse BRL,
   datas (bissextos, virada de mês, fuso), configuração, erros HTTP, refresh de sessão,
   política de retry, regras de credenciais, casos de uso e adaptadores de autenticação,
-  proteção contra open redirect.
+  proteção contra open redirect; regras financeiras (efeitos de cada tipo de
+  movimentação, saldos, transferências, faturas, parcelamento, pagamento de fatura,
+  orçamentos, metas, carteira, períodos), agregação do dashboard em cenário
+  calculado à mão, seed (determinismo, coerência, contas nunca negativas) e IndexedDB.
 - **Integração** em `tests/integration`: app completa em memória — rotas protegidas,
   login, cadastro, logout, sessão expirada, recuperação/redefinição e alteração de
-  senha, navegação, busca global, tema e sidebar.
+  senha, navegação, busca global, tema, sidebar, dashboard (valores exibidos =
+  caso de uso, filtros, URL, visão em tabela) e restauração dos dados de demonstração.
 - **E2E** em `tests/e2e` (Playwright, Chromium desktop e Pixel 7). Na primeira vez:
   `npx playwright install chromium`.
 
@@ -180,12 +196,28 @@ npm run preview
 
 Em produção, `VITE_AUTH_ADAPTER=dev` é bloqueado (exceto com `VITE_DEMO_MODE=true`).
 
+## Dashboard
+
+Indicadores (patrimônio líquido, saldo, receitas, despesas, resultado, taxa de
+economia, total investido e comprometido em faturas), gráficos (receitas x
+despesas, despesas por categoria, evolução do patrimônio, do saldo e dos
+investimentos, distribuição patrimonial), últimas movimentações, próximas contas
+e faturas, orçamentos próximos do limite, metas e alertas. Filtros: mês atual,
+30 e 90 dias, ano atual e período personalizado (guardados na URL). Todos os
+valores são calculados a partir dos dados — regras em
+[ADR 0007](./docs/adr/0007-regras-financeiras-e-contabilizacao.md). Cada gráfico
+tem legenda, resumo para leitores de tela e visão em tabela.
+
 ## Estratégia de persistência
 
-- **Desenvolvimento/demonstração:** IndexedDB (Dexie) com seed determinístico e
-  restaurável, a partir das Fases 3/4. Dados claramente identificados como demonstração.
-- **Produção:** API REST. Os repositórios `Api*Repository` implementam os mesmos
-  contratos dos `Mock*Repository`; a escolha é feita por `VITE_DATA_SOURCE`.
+- **Demonstração (`VITE_DATA_SOURCE=mock`):** IndexedDB (Dexie) com seed
+  determinístico de 12 meses (contas, receitas, despesas, cartões com compras
+  parceladas, faturas, orçamentos, metas e investimentos), gerado na primeira
+  carga e restaurável em **Configurações → Restaurar dados**. A interface
+  identifica os dados como demonstração.
+- **Produção (`VITE_DATA_SOURCE=api`):** API REST. Os `Api*Repository` implementam
+  os mesmos contratos dos `Demo*Repository` e validam as respostas com os mesmos
+  schemas. Ver [ADR 0008](./docs/adr/0008-persistencia-de-demonstracao.md).
 - `localStorage` guarda apenas preferências de interface (tema, sidebar).
 
 ## Estratégia de autenticação
@@ -233,3 +265,5 @@ documentados nas respectivas fases.
 - [0004 — Datas de calendário e fuso horário](./docs/adr/0004-datas-e-fuso-horario.md)
 - [0005 — Sessão, armazenamento e configuração](./docs/adr/0005-seguranca-sessao-e-configuracao.md)
 - [0006 — Autenticação independente de provedor e proteção de rotas](./docs/adr/0006-autenticacao-e-rotas.md)
+- [0007 — Modelo financeiro e regras de contabilização](./docs/adr/0007-regras-financeiras-e-contabilizacao.md)
+- [0008 — Repositórios, IndexedDB de demonstração e seed](./docs/adr/0008-persistencia-de-demonstracao.md)

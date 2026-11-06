@@ -49,9 +49,21 @@ const loadSettingsPage = () =>
     Component: m.SettingsPage,
   }));
 
-/** Módulos ainda não entregues: exibem placeholder com a fase prevista. */
+const loadDashboardPage = () =>
+  import('@/features/dashboard/presentation/pages/DashboardPage').then((m) => ({
+    Component: m.DashboardPage,
+  }));
+
+/** Módulos já entregues (rota real); os demais exibem placeholder com a fase prevista. */
+const deliveredModuleRoutes: RouteObject[] = [
+  { path: ROUTES.dashboard, lazy: loadDashboardPage },
+  { path: ROUTES.settings, lazy: loadSettingsPage },
+];
+
+const deliveredPaths = new Set(deliveredModuleRoutes.map((route) => route.path));
+
 const pendingModuleRoutes: RouteObject[] = NAVIGATION_ITEMS.filter(
-  (item) => item.path !== ROUTES.settings,
+  (item) => !deliveredPaths.has(item.path),
 ).map((item) => ({ path: item.path, element: <ModulePlaceholder module={item} /> }));
 
 export const appRoutes: RouteObject[] = [
@@ -92,8 +104,8 @@ export const appRoutes: RouteObject[] = [
             element: <AppLayout />,
             children: [
               { index: true, element: <Navigate to={ROUTES.dashboard} replace /> },
+              ...deliveredModuleRoutes,
               ...pendingModuleRoutes,
-              { path: ROUTES.settings, lazy: loadSettingsPage },
             ],
           },
         ],

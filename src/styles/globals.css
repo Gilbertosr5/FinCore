@@ -41,8 +41,6 @@
   --palette-amber-600: #d97706;
   --palette-red-500: #ef4444;
   --palette-red-600: #dc2626;
-  --palette-sky-500: #0ea5e9;
-  --palette-pink-500: #ec4899;
 }
 
 /* Tema claro (alternativo) */
@@ -84,11 +82,19 @@
   --sidebar-accent-foreground: var(--palette-violet-600);
   --sidebar-border: var(--palette-slate-200);
 
-  --chart-1: var(--palette-violet-500);
-  --chart-2: var(--palette-green-500);
-  --chart-3: var(--palette-amber-500);
-  --chart-4: var(--palette-sky-500);
-  --chart-5: var(--palette-pink-500);
+  /* Paleta categórica de gráficos (claro, superfície #ffffff). Ordem fixa = segurança para daltonismo;
+   * validada com o script do skill dataviz contra a superfície do card. Nunca
+   * reutilizar cores de status (sucesso/atenção/erro) como série. */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-6: #008300;
+  --chart-7: #6250d6;
+  --chart-8: #e34948;
+  --chart-grid: var(--palette-slate-200);
+  --chart-axis: var(--muted-foreground);
 }
 
 /* Tema escuro (principal) */
@@ -128,11 +134,19 @@
   --sidebar-accent-foreground: var(--palette-slate-50);
   --sidebar-border: var(--palette-ink-700);
 
-  --chart-1: var(--palette-violet-500);
-  --chart-2: var(--palette-green-500);
-  --chart-3: var(--palette-amber-500);
-  --chart-4: var(--palette-sky-500);
-  --chart-5: var(--palette-pink-500);
+  /* Paleta categórica de gráficos (escuro, superfície #172033). Ordem fixa = segurança para daltonismo;
+   * validada com o script do skill dataviz contra a superfície do card. Nunca
+   * reutilizar cores de status (sucesso/atenção/erro) como série. */
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --chart-6: #008300;
+  --chart-7: #9085e9;
+  --chart-8: #e66767;
+  --chart-grid: var(--palette-ink-700);
+  --chart-axis: var(--muted-foreground);
 }
 
 /* Exposição dos tokens como utilitários do Tailwind (bg-*, text-*, border-*...). */
@@ -180,6 +194,9 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
 }
 
 @layer base {

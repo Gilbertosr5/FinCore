@@ -92,6 +92,27 @@ export class Money {
     return new Money(this.amount.times(new MoneyDecimal(factor)), this.currency);
   }
 
+  /**
+   * Divide por um número (ex.: aporte mensal = restante / meses). Resultado
+   * arredondado a centavos (HALF_EVEN). Para repartir um total sem perder
+   * centavos, use `allocate`.
+   */
+  divide(divisor: MoneyInput): Money {
+    const value = new MoneyDecimal(divisor);
+    if (value.isZero()) throw new RangeError('Divisão por zero.');
+    return new Money(this.amount.dividedBy(value), this.currency);
+  }
+
+  /** Maior entre este valor e `other`. */
+  max(other: Money): Money {
+    return this.compare(other) >= 0 ? this : other;
+  }
+
+  /** Menor entre este valor e `other`. */
+  min(other: Money): Money {
+    return this.compare(other) <= 0 ? this : other;
+  }
+
   negate(): Money {
     return new Money(this.amount.negated(), this.currency);
   }
