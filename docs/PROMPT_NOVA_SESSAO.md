@@ -16,14 +16,15 @@ Antes de qualquer alteração, leia nesta ordem:
 
 Depois:
 - rode `git status` e `npm run check` dentro de fincore/ para confirmar que a base está verde;
-- as 9 fases do plano estão concluídas; a próxima etapa é **finalizar a integração
-  com o backend já criado (../fincore-api) e fazer a validação**, seguindo o roteiro
-  "PRÓXIMO PASSO" no CONTINUAR.md (leia também fincore-api/README.md), reutilizando
-  o que já existe, sem reescrever o que funciona;
+- as 9 fases do plano e a integração com o backend (../fincore-api) estão concluídas;
+  o próximo passo está em "PRÓXIMO PASSO" no CONTINUAR.md e em PENDENCIAS.md (leia
+  também fincore-api/README.md se mexer na API), reutilizando o que já existe, sem
+  reescrever o que funciona;
 - trabalhe de forma autônoma nas decisões técnicas comuns, documentando as relevantes
   em um novo ADR;
 - ao final de cada entrega, rode o portão de qualidade (`npm run check`, `npm run build`,
-  `npm run test:e2e`), verifique no navegador (desktop e celular, tema claro e escuro)
+  `npm run test:e2e`, `npm run test:e2e:api`; e `npm run check` + `npm run build` em
+  fincore-api/ se ele mudar), verifique no navegador (desktop e celular, tema claro e escuro)
   e atualize CONTINUAR.md, PENDENCIAS.md, PROJECT_STATUS.md, README.md e o ROADMAP;
 - não faça commit sem eu pedir.
 

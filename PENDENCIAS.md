@@ -5,7 +5,7 @@
 > acrescente o que surgir. Requisitos detalhados das fases: [`docs/ROADMAP.md`](./docs/ROADMAP.md).
 > Estado geral: [`PROJECT_STATUS.md`](./PROJECT_STATUS.md). Retomada: [`CONTINUAR.md`](./CONTINUAR.md).
 
-_Última atualização: 12/11/2026 — após a Fase 9 (todas as fases do plano entregues)._
+_Última atualização: 12/11/2026 — integração com o backend finalizada e validada (ADR 0015)._
 
 ## 1. Fases restantes do roadmap
 
@@ -54,7 +54,7 @@ _Última atualização: 12/11/2026 — após a Fase 9 (todas as fases do plano e
 - [ ] **Alterar dias de fechamento/vencimento** recalcula todas as faturas, inclusive as passadas (faturas são derivadas) — avaliar guardar o calendário histórico se o usuário mudar o vencimento com frequência.
 - [ ] **Rotas REST** `/credit-cards/{id}` e `/credit-cards/purchases/{id}` compartilham prefixo: o backend deve impedir um cartão com id `purchases` (ids são UUID).
 
-### ▶ Próxima etapa — Integração com o backend (Node.js + TypeScript + PostgreSQL — `../fincore-api`, criado em 11/11/2026)
+### Integração com o backend (Node.js + TypeScript + PostgreSQL — `../fincore-api`) — ✅ finalizada em 12/11/2026
 
 Detalhes, como rodar e pendências próprias: [`../fincore-api/README.md`](../fincore-api/README.md).
 
@@ -63,10 +63,15 @@ Detalhes, como rodar e pendências próprias: [`../fincore-api/README.md`](../fi
 - [x] `POST /transactions/batch` atômico; ids do cliente aceitos (inclui `${recorrência}_${data}`); histórico na mesma transação (`GET /audit-log`).
 - [x] Endpoints das Fases 5–7 com as regras de limite disponível, datas, orçamento ativo único, saldo de metas, venda acima da carteira, avaliação única por data.
 - [x] **Frontend ligado à API** (11/11/2026): `npm run dev:api` (porta 5180, `.env.api`) + proxy `/api` do Vite → `fincore-api` em `:8080` (mesma origem para cookies e `X-XSRF-TOKEN`). Verificado manualmente no navegador: cadastro, login/logout, sessão após recarregar, contas, despesa recorrente, marcar como pago, cartão, compra parcelada, pagamento de fatura, orçamento, meta + aporte, ativo + compra debitando conta, relatórios.
-- [ ] Testes E2E automatizados no modo API (hoje o Playwright usa só o build de demonstração) e aporte com transferência (meta com conta) ainda não exercitados contra o servidor.
-- [ ] Backend ainda não valida: valor máximo/fatura futura no pagamento de fatura; resgate acima do valor da posição.
+- [x] **E2E no modo API** (12/11/2026): `npm run test:e2e:api` sobe a API com PGlite em memória e o build `--mode api`; 7 fluxos × desktop/celular (inclui meta com transferência, investimento com conta, busca Ctrl+K e exportação JSON).
+- [x] **Backend valida** pagamento de fatura (saldo em aberto, fatura futura, data futura) e resgate acima do valor da posição (12/11/2026).
+- [x] **Gravações atômicas**: aporte + transferência e movimentação + lançamento em uma única requisição/transação; exclusão leva os lançamentos vinculados (12/11/2026). No modo demonstração, uma única transação do IndexedDB.
+- [x] **Testes dos adaptadores REST** com HTTP falso (`src/app/composition/api-repositories.test.ts`) — acharam e corrigiram o `TypeError` com valor monetário inválido na resposta (`moneyField` com `abort: true`).
+- [x] Validação no navegador interno contra a API (desktop/celular, claro/escuro) — ver `PROJECT_STATUS.md`.
 - [ ] Paginação e filtros no servidor; `Idempotency-Key`; provedor de e-mail; `GET /market/indicators` (hoje `501`) e cotações (`market_quote`).
-- [ ] Endpoints atômicos: aporte + transferência e movimentação + lançamento (hoje o cliente compensa).
+- [ ] Regras de fatura e de resgate existem no cliente **e** no servidor (portes citam a origem): ao mudar uma, mude as duas (ADR 0015).
+- [ ] Excluir o lançamento de um aporte/movimentação pela tela de Transações continua possível (o vínculo fica apontando para um id inexistente; a exclusão do aporte ignora). Avaliar bloquear no servidor ou avisar na tela.
+- [ ] Deploy: servir front e API na mesma origem com os headers de `docs/seguranca.md`; `COOKIE_SECURE=true` e PostgreSQL real.
 
 ## 3. Decisões tomadas sem confirmação do usuário (revisar se necessário)
 

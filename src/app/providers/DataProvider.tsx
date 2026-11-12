@@ -174,16 +174,11 @@ function createServices(layer: DataLayer, today: () => IsoDate) {
       ...ledgerContext,
       goals: repositories.goals,
       // Aportes com movimento de dinheiro viram transferências do livro de lançamentos.
+      // Gravadas junto com o aporte, na mesma operação atômica (ADR 0015).
       transfers: {
-        create: (input) => ledger.createTransfer.execute(input),
-        remove: async (transferId) => {
-          const legs = (await repositories.transactions.findAll()).filter(
-            (tx) => tx.transfer?.id === transferId,
-          );
-          const [leg] = legs;
-          // Já excluída pelo usuário em Transações: nada a fazer.
-          if (leg) await ledger.remove.execute(leg.id);
-        },
+        prepare: (input) => ledger.createTransfer.prepare(input),
+        prepareRemoval: (transferId) =>
+          ledger.createTransfer.prepareRemoval(transferId, 'Excluído junto com o aporte da meta'),
       },
     }),
     today,

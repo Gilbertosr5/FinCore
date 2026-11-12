@@ -1,6 +1,7 @@
 import type { Account } from '@/features/accounts/domain/entities/account';
 import type { AccountRepository } from '@/features/accounts/domain/repositories/account.repository';
 import type { AuditEntry, AuditLogRepository } from '@/features/history/domain/audit-entry';
+import type { Transaction } from '@/features/transactions/domain/entities/transaction';
 import { formatDateBR, type IsoDate } from '@/lib/dates';
 import { DomainError } from '@/lib/errors/domain-error';
 import { formatMoney, Money } from '@/lib/money';
@@ -27,14 +28,21 @@ import {
  * de dinheiro, ele é uma transferência (ADR 0007/0011).
  */
 export interface GoalTransferPort {
-  create(input: {
+  /**
+   * Valida e monta as pernas da transferência SEM gravar: o repositório de metas
+   * grava aporte + transferência juntos (ADR 0015). `confirm` registra o histórico.
+   */
+  prepare(input: {
     fromAccountId: string;
     toAccountId: string;
     amount: Money;
     date: IsoDate;
     description: string;
-  }): Promise<string>;
-  remove(transferId: string): Promise<void>;
+  }): Promise<{ transferId: string; transactions: Transaction[]; confirm: () => Promise<void> }>;
+  /** Pernas ainda existentes de uma transferência (vazio se já foram excluídas). */
+  prepareRemoval(
+    transferId: string,
+  ): Promise<{ transactionIds: string[]; confirm: () => Promise<void> }>;
 }
 
 export interface GoalContext {
@@ -280,7 +288,7 @@ export class AddContributionUseCase {
       }
     }
 
-    let transferId: string | null = null;
+    let transfer: Awaited<ReturnType<GoalTransferPort['prepare']>> | null = null;
     if (input.counterpartAccountId !== null) {
       if (goal.accountId === null) {
         throw new GoalError(
@@ -293,7 +301,7 @@ export class AddContributionUseCase {
       }
       await assertAccount(this.context, input.counterpartAccountId);
       const deposit = input.type === 'deposit';
-      transferId = await this.context.transfers.create({
+      transfer = await this.context.transfers.prepare({
         fromAccountId: deposit ? input.counterpartAccountId : goal.accountId,
         toAccountId: deposit ? goal.accountId : input.counterpartAccountId,
         amount: input.amount,
@@ -308,20 +316,17 @@ export class AddContributionUseCase {
       date: input.date,
       amount: input.amount,
       type: input.type,
-      transferId,
+      transferId: transfer?.transferId ?? null,
     };
-    try {
-      await this.context.goals.saveContribution(contribution);
-    } catch (error) {
-      if (transferId !== null) await this.context.transfers.remove(transferId);
-      throw error;
-    }
+    // Aporte e transferência numa única gravação: ou os dois, ou nenhum.
+    await this.context.goals.saveContribution(contribution, transfer?.transactions ?? []);
+    await transfer?.confirm();
     await this.context.audit.append([
       audit(
         this.context,
         goal.id,
         'created',
-        `${input.type === 'deposit' ? 'Aporte' : 'Retirada'} de ${formatMoney(input.amount)} em ${formatDateBR(input.date)}${transferId ? ' (com transferência entre contas)' : ''}.`,
+        `${input.type === 'deposit' ? 'Aporte' : 'Retirada'} de ${formatMoney(input.amount)} em ${formatDateBR(input.date)}${transfer ? ' (com transferência entre contas)' : ''}.`,
       ),
     ]);
     return contribution;
@@ -348,10 +353,12 @@ export class RemoveContributionUseCase {
         'Há retiradas que dependem deste aporte. Exclua-as antes.',
       );
     }
-    await this.context.goals.removeContribution(id);
-    if (contribution.transferId !== null) {
-      await this.context.transfers.remove(contribution.transferId);
-    }
+    const removal =
+      contribution.transferId === null
+        ? null
+        : await this.context.transfers.prepareRemoval(contribution.transferId);
+    await this.context.goals.removeContribution(id, removal?.transactionIds ?? []);
+    await removal?.confirm();
     await this.context.audit.append([
       audit(
         this.context,

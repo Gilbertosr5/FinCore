@@ -2,6 +2,7 @@ import type { Account } from '@/features/accounts/domain/entities/account';
 import type { AccountRepository } from '@/features/accounts/domain/repositories/account.repository';
 import type { AuditEntry, AuditLogRepository } from '@/features/history/domain/audit-entry';
 import type { Category } from '@/features/transactions/domain/entities/category';
+import type { Transaction } from '@/features/transactions/domain/entities/transaction';
 import type { CategoryRepository } from '@/features/transactions/domain/repositories/transaction.repository';
 import { formatDateBR, type IsoDate } from '@/lib/dates';
 import { DomainError } from '@/lib/errors/domain-error';
@@ -45,7 +46,11 @@ import {
  * proventos são receita (ADR 0007/0012).
  */
 export interface InvestmentLedgerPort {
-  record(input: {
+  /**
+   * Valida e monta o lançamento SEM gravar: o repositório da carteira grava
+   * movimentação + lançamento juntos (ADR 0015). `confirm` registra o histórico.
+   */
+  prepare(input: {
     flow: 'application' | 'redemption' | 'income';
     accountId: string;
     assetId: string;
@@ -53,8 +58,11 @@ export interface InvestmentLedgerPort {
     date: IsoDate;
     description: string;
     categoryId: string | null;
-  }): Promise<string>;
-  remove(transactionId: string): Promise<void>;
+  }): Promise<{ transactions: Transaction[]; confirm: () => Promise<void> }>;
+  /** Lançamento vinculado ainda existente (vazio se já foi excluído). */
+  prepareRemoval(
+    transactionId: string,
+  ): Promise<{ transactionIds: string[]; confirm: () => Promise<void> }>;
 }
 
 export interface InvestmentContext {
@@ -346,6 +354,7 @@ export class RecordMovementUseCase {
       }
     }
 
+    let linked: Awaited<ReturnType<InvestmentLedgerPort['prepare']>> | null = null;
     if (input.accountId !== null) {
       const flow = CAPITAL_IN_TYPES.has(input.type)
         ? 'application'
@@ -361,7 +370,7 @@ export class RecordMovementUseCase {
         );
       }
       const label = asset.ticker ?? asset.name;
-      candidate.transactionId = await this.context.ledger.record({
+      linked = await this.context.ledger.prepare({
         flow,
         accountId: input.accountId,
         assetId: asset.id,
@@ -377,14 +386,11 @@ export class RecordMovementUseCase {
       });
     }
 
-    try {
-      await this.context.investments.saveMovement(candidate);
-    } catch (error) {
-      if (candidate.transactionId !== null) {
-        await this.context.ledger.remove(candidate.transactionId);
-      }
-      throw error;
-    }
+    const [transaction] = linked?.transactions ?? [];
+    candidate.transactionId = transaction?.id ?? null;
+    // Movimentação e lançamento numa única gravação: ou os dois, ou nenhum.
+    await this.context.investments.saveMovement(candidate, transaction ?? null);
+    await linked?.confirm();
     await this.context.audit.append([
       audit(
         this.context,
@@ -436,8 +442,12 @@ export class RemoveMovementUseCase {
     if (CAPITAL_IN_TYPES.has(movement.type) && movement.quantity !== null) {
       assertQuantityNeverNegative(remaining);
     }
-    await this.context.investments.removeMovement(id);
-    if (movement.transactionId !== null) await this.context.ledger.remove(movement.transactionId);
+    const removal =
+      movement.transactionId === null
+        ? null
+        : await this.context.ledger.prepareRemoval(movement.transactionId);
+    await this.context.investments.removeMovement(id, removal?.transactionIds ?? []);
+    await removal?.confirm();
     await this.context.audit.append([
       audit(
         this.context,

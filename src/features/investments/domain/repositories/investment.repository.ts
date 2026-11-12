@@ -1,3 +1,5 @@
+import type { Transaction } from '@/features/transactions/domain/entities/transaction';
+
 import type { Asset, AssetValuation, InvestmentMovement } from '../entities/investment';
 import type { MarketIndicatorsSnapshot } from '../entities/market-indicator';
 
@@ -9,8 +11,13 @@ export interface InvestmentRepository {
   saveAsset(asset: Asset): Promise<void>;
   /** Exclui o ativo (somente sem movimentações — validado no caso de uso). */
   removeAsset(id: string): Promise<void>;
-  saveMovement(movement: InvestmentMovement): Promise<void>;
-  removeMovement(id: string): Promise<void>;
+  /**
+   * Grava a movimentação e, se houver, o lançamento da conta numa única operação
+   * atômica (ADR 0015): na API, uma requisição; no IndexedDB, uma transação.
+   */
+  saveMovement(movement: InvestmentMovement, linked?: Transaction | null): Promise<void>;
+  /** Exclui a movimentação e o lançamento vinculado, atomicamente. */
+  removeMovement(id: string, linkedTransactionIds?: readonly string[]): Promise<void>;
   saveValuation(valuation: AssetValuation): Promise<void>;
   removeValuation(id: string): Promise<void>;
 }

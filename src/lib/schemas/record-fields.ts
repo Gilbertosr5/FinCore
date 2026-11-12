@@ -11,9 +11,14 @@ import { Money } from '@/lib/money';
 
 export const idField = z.union([z.string().min(1), z.number()]).transform(String);
 
+/**
+ * `abort: true`: com texto inválido o `transform` não roda e o campo continua
+ * string — os refinamentos do objeto (ex.: `record.amount.isNegative()`) não
+ * podem rodar sobre ele, senão a falha vira TypeError em vez de DataIntegrityError.
+ */
 export const moneyField = z
   .string()
-  .regex(/^-?\d+(\.\d{1,2})?$/, 'Valor monetário inválido')
+  .regex(/^-?\d+(\.\d{1,2})?$/, { message: 'Valor monetário inválido', abort: true })
   .transform((value) => Money.of(value));
 
 export const isoDateField = z.string().refine(isIsoDate, 'Data inválida');

@@ -1,10 +1,12 @@
 import type { AxiosInstance } from 'axios';
 import { z } from 'zod';
 
+import { transactionToRecord, type Transaction } from '@/features/transactions';
 import { parseRecords } from '@/lib/schemas/parse-records';
 import { idField, isoDateField, moneyField, nullableString } from '@/lib/schemas/record-fields';
 import { isApiError } from '@/services/api/api-error';
 import { fetchList } from '@/services/api/list-resource';
+import type { DemoRecord } from '@/services/storage/demo-data-contracts';
 import type { DemoDataStore } from '@/services/storage/demo-data-store';
 
 import type { Goal, GoalContribution } from '../domain/entities/goal';
@@ -88,14 +90,23 @@ export class DemoGoalRepository implements GoalRepository {
     );
   }
 
-  async saveContribution(contribution: GoalContribution): Promise<void> {
+  async saveContribution(
+    contribution: GoalContribution,
+    transferLegs: readonly Transaction[] = [],
+  ): Promise<void> {
+    // Uma única transação do IndexedDB: aporte e transferência, ou nada.
     await this.store.write({
-      put: { goalContributions: [goalContributionToRecord(contribution)] },
+      put: {
+        goalContributions: [goalContributionToRecord(contribution)],
+        transactions: transferLegs.map((leg) => transactionToRecord(leg) as DemoRecord),
+      },
     });
   }
 
-  async removeContribution(id: string): Promise<void> {
-    await this.store.write({ remove: { goalContributions: [id] } });
+  async removeContribution(id: string, transferLegIds: readonly string[] = []): Promise<void> {
+    await this.store.write({
+      remove: { goalContributions: [id], transactions: [...transferLegIds] },
+    });
   }
 }
 
@@ -129,13 +140,18 @@ export class ApiGoalRepository implements GoalRepository {
     return fetchList(this.http, GOAL_ENDPOINTS.contributions, goalContributionRecordSchema);
   }
 
-  async saveContribution(contribution: GoalContribution): Promise<void> {
-    await this.http.put(
-      GOAL_ENDPOINTS.contribution(contribution.id),
-      goalContributionToRecord(contribution),
-    );
+  /** Aporte + pernas da transferência numa única requisição (o servidor grava tudo ou nada). */
+  async saveContribution(
+    contribution: GoalContribution,
+    transferLegs: readonly Transaction[] = [],
+  ): Promise<void> {
+    await this.http.put(GOAL_ENDPOINTS.contribution(contribution.id), {
+      ...goalContributionToRecord(contribution),
+      transactions: transferLegs.map(transactionToRecord),
+    });
   }
 
+  /** O servidor exclui as pernas da transferência vinculada na mesma transação. */
   async removeContribution(id: string): Promise<void> {
     await this.http.delete(GOAL_ENDPOINTS.contribution(id));
   }

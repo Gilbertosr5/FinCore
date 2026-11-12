@@ -1,6 +1,7 @@
 import type { AxiosInstance } from 'axios';
 import { z } from 'zod';
 
+import { transactionToRecord, type Transaction } from '@/features/transactions';
 import { parseRecords } from '@/lib/schemas/parse-records';
 import { idField, isoDateField, moneyField, nullableString } from '@/lib/schemas/record-fields';
 import { isApiError } from '@/services/api/api-error';
@@ -142,14 +143,23 @@ export class DemoInvestmentRepository implements InvestmentRepository {
     await this.store.write({ remove: { assets: [id] } });
   }
 
-  async saveMovement(movement: InvestmentMovement): Promise<void> {
+  async saveMovement(
+    movement: InvestmentMovement,
+    linked: Transaction | null = null,
+  ): Promise<void> {
+    // Uma única transação do IndexedDB: movimentação e lançamento, ou nada.
     await this.store.write({
-      put: { investmentMovements: [investmentMovementToRecord(movement)] },
+      put: {
+        investmentMovements: [investmentMovementToRecord(movement)],
+        transactions: linked ? [transactionToRecord(linked)] : [],
+      },
     });
   }
 
-  async removeMovement(id: string): Promise<void> {
-    await this.store.write({ remove: { investmentMovements: [id] } });
+  async removeMovement(id: string, linkedTransactionIds: readonly string[] = []): Promise<void> {
+    await this.store.write({
+      remove: { investmentMovements: [id], transactions: [...linkedTransactionIds] },
+    });
   }
 
   async saveValuation(valuation: AssetValuation): Promise<void> {
@@ -185,13 +195,18 @@ export class ApiInvestmentRepository implements InvestmentRepository {
     await this.http.delete(INVESTMENT_ENDPOINTS.asset(id));
   }
 
-  async saveMovement(movement: InvestmentMovement): Promise<void> {
-    await this.http.put(
-      INVESTMENT_ENDPOINTS.movement(movement.id),
-      investmentMovementToRecord(movement),
-    );
+  /** Movimentação + lançamento numa única requisição (o servidor grava tudo ou nada). */
+  async saveMovement(
+    movement: InvestmentMovement,
+    linked: Transaction | null = null,
+  ): Promise<void> {
+    await this.http.put(INVESTMENT_ENDPOINTS.movement(movement.id), {
+      ...investmentMovementToRecord(movement),
+      transaction: linked ? transactionToRecord(linked) : null,
+    });
   }
 
+  /** O servidor exclui o lançamento vinculado na mesma transação. */
   async removeMovement(id: string): Promise<void> {
     await this.http.delete(INVESTMENT_ENDPOINTS.movement(id));
   }

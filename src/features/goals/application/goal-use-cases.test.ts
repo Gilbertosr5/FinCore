@@ -151,7 +151,7 @@ describe('aportes e retiradas', () => {
     ).rejects.toMatchObject({ code: 'transfer_requires_account' });
   });
 
-  it('se gravar o aporte falhar, a transferência é desfeita (compensação)', async () => {
+  it('aporte e transferência são gravados juntos: se a gravação falhar, nenhum dos dois fica', async () => {
     const env = createInMemoryGoals();
     env.failures.saveContribution = true;
     await expect(

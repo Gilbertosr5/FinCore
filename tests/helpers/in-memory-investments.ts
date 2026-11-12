@@ -49,13 +49,16 @@ export function createInMemoryInvestments(
       assets.delete(id);
       return Promise.resolve();
     },
-    saveMovement: (movement) => {
+    // Gravação atômica: com falha simulada, nem a movimentação nem o lançamento ficam.
+    saveMovement: (movement, linked = null) => {
       if (failures.saveMovement) return Promise.reject(new Error('falha simulada'));
       movements.set(movement.id, movement);
+      if (linked) ledger.state.transactions.set(linked.id, linked);
       return Promise.resolve();
     },
-    removeMovement: (id) => {
+    removeMovement: (id, linkedIds = []) => {
       movements.delete(id);
+      for (const linkedId of linkedIds) ledger.state.transactions.delete(linkedId);
       return Promise.resolve();
     },
     saveValuation: (valuation) => {

@@ -176,17 +176,17 @@ Regras: [ADR 0007](./adr/0007-regras-financeiras-e-contabilizacao.md) e
 cliente; `PUT` cria ou substitui (idempotente). Faturas continuam **derivadas**
 (não são recurso).
 
-| Método | Caminho                        | Corpo                                  | Observações                                                                                                                                     |
-| ------ | ------------------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/credit-cards/{id}`           | —                                      | `404` → inexistente                                                                                                                             |
-| PUT    | `/credit-cards/{id}`           | Cartão                                 | Cria/edita; inclui `status` (`active`/`blocked`/`cancelled`). `422` para dias fora de 1–31 ou limite ≤ 0                                        |
-| DELETE | `/credit-cards/{id}`           | —                                      | `409` se houver compras ou pagamentos (cancelar em vez de excluir)                                                                              |
-| GET    | `/credit-cards/purchases/{id}` | —                                      | `404` → inexistente                                                                                                                             |
-| PUT    | `/credit-cards/purchases/{id}` | Compra                                 | Cria/edita/cancela (`status: "cancelled"`). `422`: cartão inativo, data futura, 1–48 parcelas, **limite insuficiente**                          |
-| POST   | `/transactions/batch`          | `{ upsert: [Transação card_payment] }` | Pagamento de fatura (total, parcial ou antecipado) e estorno (`status: "cancelled"`). `422` se exceder o saldo em aberto ou a fatura for futura |
-| GET    | `/budgets/{id}`                | —                                      | `404` → inexistente                                                                                                                             |
-| PUT    | `/budgets/{id}`                | Orçamento                              | `409` se já houver orçamento **ativo** para a mesma categoria (ou geral) e período                                                              |
-| DELETE | `/budgets/{id}`                | —                                      | Remove o orçamento (lançamentos não são afetados)                                                                                               |
+| Método | Caminho                        | Corpo                                  | Observações                                                                                                                                                                                                       |
+| ------ | ------------------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/credit-cards/{id}`           | —                                      | `404` → inexistente                                                                                                                                                                                               |
+| PUT    | `/credit-cards/{id}`           | Cartão                                 | Cria/edita; inclui `status` (`active`/`blocked`/`cancelled`). `422` para dias fora de 1–31 ou limite ≤ 0                                                                                                          |
+| DELETE | `/credit-cards/{id}`           | —                                      | `409` se houver compras ou pagamentos (cancelar em vez de excluir)                                                                                                                                                |
+| GET    | `/credit-cards/purchases/{id}` | —                                      | `404` → inexistente                                                                                                                                                                                               |
+| PUT    | `/credit-cards/purchases/{id}` | Compra                                 | Cria/edita/cancela (`status: "cancelled"`). `422`: cartão inativo, data futura, 1–48 parcelas, **limite insuficiente**                                                                                            |
+| POST   | `/transactions/batch`          | `{ upsert: [Transação card_payment] }` | Pagamento de fatura (total, parcial ou antecipado) e estorno (`status: "cancelled"`). `422`: `CARD_PAYMENT_EXCEEDS_OUTSTANDING`, `INVOICE_NOT_OPEN`, `INVOICE_NOT_PAYABLE`, `CARD_PAYMENT_FUTURE_DATE` (ADR 0015) |
+| GET    | `/budgets/{id}`                | —                                      | `404` → inexistente                                                                                                                                                                                               |
+| PUT    | `/budgets/{id}`                | Orçamento                              | `409` se já houver orçamento **ativo** para a mesma categoria (ou geral) e período                                                                                                                                |
+| DELETE | `/budgets/{id}`                | —                                      | Remove o orçamento (lançamentos não são afetados)                                                                                                                                                                 |
 
 Histórico (`/audit-log`): `entityType` passa a aceitar também `credit_card`,
 `card_purchase` e `budget`.
@@ -204,11 +204,12 @@ Regras: [ADR 0011](./adr/0011-metas-e-planejamento.md). Planejamento e projeçõ
 | PUT    | `/goals/contributions/{id}` | Aporte | `{ id, goalId, date, amount, type: "deposit"\|"withdrawal", transferId }`. `422`: meta inativa, data futura/antes do início, retirada acima do acumulado |
 | DELETE | `/goals/contributions/{id}` | —      | `409` se deixar retiradas posteriores sem saldo                                                                                                          |
 
-**Recomendado ao backend:** aceitar o aporte com transferência em uma única
-requisição (ex.: `POST /goals/{id}/contributions` com `counterpartAccountId`),
-gravando a transferência e o aporte na mesma transação. Hoje o cliente grava a
-transferência (`POST /transactions/batch`) e depois o aporte, desfazendo a
-transferência se o aporte falhar.
+**Aporte com transferência — atômico (ADR 0015):** o `PUT /goals/contributions/{id}`
+aceita `transactions`: as duas pernas da transferência (Transação `kind: transfer`,
+`transfer.id = transferId`, mesmo valor; a perna da conta da meta entra no aporte e
+sai na retirada). Aporte e pernas são gravados na mesma transação do banco
+(`422 CONTRIBUTION_TRANSFER_MISMATCH` se não corresponderem). O `DELETE` remove
+junto as pernas da transferência vinculada. Sem `transactions`, grava só o aporte.
 
 Histórico (`/audit-log`): `entityType` aceita também `goal`.
 
@@ -226,9 +227,12 @@ Regras: [ADR 0012](./adr/0012-investimentos-custo-medio-e-indicadores.md).
 | DELETE | `/investments/valuations/{id}`    | —            |                                                                                                                                                                       |
 | GET    | `/market/indicators` (**futuro**) | —            | `[{ code: "cdi"\|"ipca"\|"selic"\|"ibovespa", date, value: "10.65", unit: "percent_year"\|"percent_12m"\|"points", source }]`. `404`/`501` = indisponível             |
 
-Lançamentos de conta gerados por movimentações usam `POST /transactions/batch`
-(`kind: investment` para aplicação/resgate; `income` para proventos). Recomendado
-ao backend: aceitar movimentação + lançamento em uma única requisição atômica.
+**Movimentação com lançamento — atômica (ADR 0015):** o `PUT /investments/movements/{id}`
+aceita `transaction` (Transação ou `null`): `id = transactionId`, mesmo valor, paga na
+data da movimentação; `kind: investment` (`application` em aporte/compra, `redemption`
+em resgate/venda, mesmo ativo) ou `income` para proventos. Gravados na mesma transação
+(`422 MOVEMENT_TRANSACTION_MISMATCH` se não corresponderem). O `DELETE` remove junto o
+lançamento vinculado. Resgate acima do valor da posição: `422 MOVEMENT_EXCEEDS_POSITION`.
 
 Histórico (`/audit-log`): `entityType` aceita também `asset`.
 

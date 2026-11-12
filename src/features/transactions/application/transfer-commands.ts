@@ -1,7 +1,12 @@
 import type { IsoDate } from '@/lib/dates';
 import { formatMoney, type Money } from '@/lib/money';
 
-import { auditEntry, type LedgerContext } from './ledger-context';
+import {
+  auditEntry,
+  type LedgerContext,
+  type PreparedLedgerRemoval,
+  type PreparedLedgerWrite,
+} from './ledger-context';
 import type { Transaction } from '../domain/entities/transaction';
 import { TransactionError } from '../domain/errors/transaction-error';
 import {
@@ -95,23 +100,56 @@ async function validate(
 export class CreateTransferUseCase {
   constructor(private readonly context: LedgerContext) {}
 
-  async execute(input: TransferInput): Promise<string> {
+  /** Valida e monta as duas pernas sem gravar (ver `PreparedLedgerWrite`). */
+  async prepare(input: TransferInput): Promise<PreparedLedgerWrite & { transferId: string }> {
     const { description, notes } = await validate(this.context, input);
     const transferId = this.context.newId();
     const legs = buildLegs(transferId, input, description, notes, this.context.today());
-    await this.context.transactions.commit({ upsert: legs });
-    await this.context.audit.append(
-      legs.map((leg) =>
-        auditEntry(
-          this.context,
-          'transaction',
-          leg.id,
-          'created',
-          `Transferência de ${formatMoney(input.amount)} registrada.`,
+    return {
+      transferId,
+      transactions: legs,
+      confirm: () =>
+        this.context.audit.append(
+          legs.map((leg) =>
+            auditEntry(
+              this.context,
+              'transaction',
+              leg.id,
+              'created',
+              `Transferência de ${formatMoney(input.amount)} registrada.`,
+            ),
+          ),
         ),
-      ),
+    };
+  }
+
+  async execute(input: TransferInput): Promise<string> {
+    const prepared = await this.prepare(input);
+    await this.context.transactions.commit({ upsert: prepared.transactions });
+    await prepared.confirm();
+    return prepared.transferId;
+  }
+
+  /** Pernas de uma transferência a remover junto com o registro que a originou. */
+  async prepareRemoval(transferId: string, reason: string): Promise<PreparedLedgerRemoval> {
+    const legs = (await this.context.transactions.findAll()).filter(
+      (tx) => tx.transfer?.id === transferId,
     );
-    return transferId;
+    return {
+      transactionIds: legs.map((leg) => leg.id),
+      confirm: () =>
+        this.context.audit.append(
+          legs.map((leg) =>
+            auditEntry(
+              this.context,
+              'transaction',
+              leg.id,
+              'deleted',
+              `${reason}: ${leg.description}.`,
+            ),
+          ),
+        ),
+    };
   }
 }
 

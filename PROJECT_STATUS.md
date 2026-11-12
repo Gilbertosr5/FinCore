@@ -1,6 +1,6 @@
 # FinCore — Status do Projeto
 
-_Última atualização: 12/11/2026 — Fase 9 concluída (todas as fases entregues)._
+_Última atualização: 12/11/2026 — integração com o backend finalizada e validada (ADR 0015)._
 
 > Para retomar em um novo chat, leia [`CONTINUAR.md`](./CONTINUAR.md). Pendências consolidadas: [`PENDENCIAS.md`](./PENDENCIAS.md).
 
@@ -17,6 +17,42 @@ _Última atualização: 12/11/2026 — Fase 9 concluída (todas as fases entregu
 | 7    | Investimentos           | ✅ Concluída |
 | 8    | Calendário e relatórios | ✅ Concluída |
 | 9    | Finalização e qualidade | ✅ Concluída |
+
+## Integração com o backend — finalizada (12/11/2026)
+
+Decisões em [ADR 0015](./docs/adr/0015-integracao-com-o-backend.md). Backend em
+[`../fincore-api`](../fincore-api/README.md).
+
+**Implementado**
+
+- Backend: validação do pagamento de fatura (`CARD_PAYMENT_EXCEEDS_OUTSTANDING`,
+  `INVOICE_NOT_OPEN`, `INVOICE_NOT_PAYABLE`, `CARD_PAYMENT_FUTURE_DATE`) com o cálculo de
+  faturas portado do front; resgate acima do valor da posição (`MOVEMENT_EXCEEDS_POSITION`).
+- Gravações atômicas: `PUT /goals/contributions/{id}` com as pernas da transferência e
+  `PUT /investments/movements/{id}` com o lançamento; os `DELETE` removem os vinculados.
+  No front, as portas só preparam os lançamentos e o repositório grava tudo de uma vez (uma
+  requisição na API; uma transação do IndexedDB na demonstração). A compensação no cliente
+  deixou de existir.
+- Testes dos adaptadores REST com HTTP falso e E2E do modo API (`npm run test:e2e:api`).
+- Correção: valor monetário inválido numa resposta da API gerava `TypeError` em vez de
+  `DataIntegrityError` (`moneyField` com `abort: true`).
+
+**Verificação (12/11/2026)**
+
+| Portão                                   | Resultado                                                   |
+| ---------------------------------------- | ----------------------------------------------------------- |
+| `fincore`: `npm run check`               | ✅ 49 arquivos, 530 testes (13 novos de adaptadores REST)   |
+| `fincore`: `npm run build`               | ✅ chunk `App` 214 kB (63 kB gzip)                          |
+| `fincore`: `npm run test:e2e`            | ✅ 51 passaram, 1 ignorado de propósito (Ctrl+K no celular) |
+| `fincore`: `npm run test:e2e:api`        | ✅ 14 (7 fluxos × desktop/celular) contra API + PGlite      |
+| `fincore-api`: `npm run check` + `build` | ✅ 6 arquivos, 46 testes (8 novos em `integrity.test.ts`)   |
+
+**Navegador interno contra a API** (`fincore-api` + `npm run dev:api`): cadastro e dashboard
+(escuro, desktop); aporte em meta **com transferência** — um único `PUT`, nenhuma chamada
+a `/transactions/batch`, as duas pernas criadas — e exclusão do aporte removendo as pernas;
+cartões (claro, celular) com limite, fatura aberta e a pagar; aporte em CDB debitando a
+conta — movimentação e lançamento vinculados numa só gravação. Console: só os `401`
+esperados antes do login e o `501` dos indicadores de mercado; servidor sem erros.
 
 ## Fase 9 — Implementado
 

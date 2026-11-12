@@ -240,7 +240,7 @@ describe('movimentações', () => {
     ).rejects.toMatchObject({ code: 'account_not_supported' });
   });
 
-  it('se gravar a movimentação falhar, o lançamento é desfeito (compensação)', async () => {
+  it('movimentação e lançamento são gravados juntos: se a gravação falhar, nenhum dos dois fica', async () => {
     const env = createInMemoryInvestments();
     env.failures.saveMovement = true;
     await expect(

@@ -15,48 +15,45 @@ escreve em **português do Brasil**; responda sempre em pt-BR.
 - O que já foi entregue, testes e problemas conhecidos: [`PROJECT_STATUS.md`](./PROJECT_STATUS.md)
 - **Todas as pendências acumuladas** (fases restantes, itens adiados, backend, decisões a confirmar): [`PENDENCIAS.md`](./PENDENCIAS.md)
 - Prompt pronto para abrir uma nova sessão: [`docs/PROMPT_NOVA_SESSAO.md`](./docs/PROMPT_NOVA_SESSAO.md)
-- Decisões arquiteturais: [`docs/adr/`](./docs/adr/) (0001–0014); segurança do front e headers do servidor: [`docs/seguranca.md`](./docs/seguranca.md)
+- Decisões arquiteturais: [`docs/adr/`](./docs/adr/) (0001–0015); segurança do front e headers do servidor: [`docs/seguranca.md`](./docs/seguranca.md)
 - Contratos HTTP com o backend futuro: [`docs/api-contract.md`](./docs/api-contract.md),
   [`docs/auth-contract.md`](./docs/auth-contract.md)
 
 ## 2. Estado atual
 
-| Fase | Descrição                                                                    | Status                                                                                        |
-| ---- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| 1–4  | Fundação, autenticação/layout, dashboard, gestão financeira                  | ✅ (commits "Fase 1 e Fase 2", "Fase 3", "Fase 4")                                            |
-| 5–8  | Cartões/orçamentos; metas/planejamento; investimentos; calendário/relatórios | ✅ concluídas em 11/11/2026 (commitadas pelo usuário)                                         |
-| 9    | Finalização e qualidade (a11y, performance, CSP, erros, busca, exportação)   | ✅ concluída em 12/11/2026 — **não commitada** (o usuário faz o commit; confira `git status`) |
+| Fase | Descrição                                                                    | Status                                                                                           |
+| ---- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 1–4  | Fundação, autenticação/layout, dashboard, gestão financeira                  | ✅ (commits "Fase 1 e Fase 2", "Fase 3", "Fase 4")                                               |
+| 5–8  | Cartões/orçamentos; metas/planejamento; investimentos; calendário/relatórios | ✅ concluídas em 11/11/2026 (commitadas pelo usuário)                                            |
+| 9    | Finalização e qualidade (a11y, performance, CSP, erros, busca, exportação)   | ✅ concluída em 12/11/2026 (commit "Fase 9 finalizacao")                                         |
+| —    | Integração com o backend (regras no servidor, gravações atômicas, E2E API)   | ✅ concluída em 12/11/2026 — **não commitada** (`fincore` e `fincore-api`; confira `git status`) |
 
-**As 9 fases do plano estão entregues.** Última verificação completa: `npm run check`
-(48 arquivos, 517 testes), `npm run build` (chunk `App` 231 kB / 66 kB gzip) e
-`npm run test:e2e` (desktop + celular, incluindo auditoria axe e CSP; 1 teste ignorado de
-propósito) — tudo verde. Detalhes: [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
+**As 9 fases do plano e a integração com o backend estão entregues.** Última verificação
+completa (12/11/2026): `npm run check` (49 arquivos, 530 testes), `npm run build` (chunk
+`App` 214 kB / 63 kB gzip), `npm run test:e2e` (51 + 1 ignorado de propósito),
+`npm run test:e2e:api` (14) e, em `../fincore-api`, `npm run check` (46 testes) + `build` —
+tudo verde. Detalhes: [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
 
-### ▶ PRÓXIMO PASSO: finalizar a integração com o backend e validar (definido pelo usuário em 12/11/2026)
+### ✅ Integração com o backend finalizada e validada (12/11/2026) — **não commitada**
 
-O backend já existe em `../fincore-api` (Node + Fastify + Drizzle, leia o
-`../fincore-api/README.md`; portão: `npm run check` e `npm run build` lá dentro). A
-integração básica foi verificada à mão em 11/11 (ver "Integração com o backend" em
-`PENDENCIAS.md`). Roteiro sugerido:
+Decisões em [ADR 0015](./docs/adr/0015-integracao-com-o-backend.md); resultado em
+[`PROJECT_STATUS.md`](./PROJECT_STATUS.md) ("Integração com o backend").
 
-- [ ] Subir os dois lados (`fincore-api`: `npm run dev`; `fincore`: `npm run dev:api`) e
-      rodar os portões de qualidade de ambos para confirmar a base
-- [ ] **Fechar lacunas do backend**: validar no pagamento de fatura o valor máximo e a fatura
-      futura; recusar resgate acima do valor da posição (mesmas regras dos ADRs 0010/0012)
-- [ ] **Endpoints atômicos** para aporte de meta + transferência e movimentação de
-      investimento + lançamento (hoje o cliente compensa); ajustar os `Api*Repository`
-- [ ] **E2E no modo API**: projeto do Playwright que sobe a API (PGlite) e roda os fluxos
-      principais (cadastro/login, lançamentos, cartões/fatura, orçamento, meta com
-      transferência, investimento, relatórios, busca Ctrl+K e exportação JSON)
-- [ ] **Testes dos adaptadores REST** com HTTP falso (erros 4xx/5xx, 401 → sessão
-      expirada, 429, validação Zod da resposta)
-- [ ] Validar no navegador (desktop/celular, claro/escuro) todos os módulos contra a API
-      e registrar o resultado em `PROJECT_STATUS.md`; decisões em ADR 0015
-- [ ] Atualizar `docs/api-contract.md`, `PENDENCIAS.md` e este arquivo
+- [x] Portões dos dois projetos (base e final)
+- [x] Backend valida pagamento de fatura (saldo em aberto, fatura futura) e resgate acima da posição
+- [x] Aporte + transferência e movimentação + lançamento **atômicos** (`PUT` com os lançamentos;
+      `DELETE` remove os vinculados); `GoalTransferPort`/`InvestmentLedgerPort` só **preparam**
+- [x] E2E no modo API: `npm run test:e2e:api` (`playwright.api.config.ts`, `tests/e2e-api/`)
+- [x] Testes dos adaptadores REST com HTTP falso (`src/app/composition/api-repositories.test.ts`)
+- [x] Validação no navegador (desktop/celular, claro/escuro) contra a API
+- [x] `docs/api-contract.md`, `PENDENCIAS.md`, este arquivo e `../fincore-api/README.md`
 
-Depois disso (ver [`PENDENCIAS.md`](./PENDENCIAS.md)): Configurações (moeda, formato de
-data, fuso), exclusão de conta/sessões/notificações no servidor e deploy com os headers
-de [`docs/seguranca.md`](./docs/seguranca.md).
+### ▶ PRÓXIMO PASSO (a combinar com o usuário)
+
+Ver [`PENDENCIAS.md`](./PENDENCIAS.md): Configurações (moeda, formato de data, fuso),
+exclusão de conta/sessões/notificações no servidor, paginação/filtros e agregações no
+servidor, provedor de e-mail, indicadores de mercado e deploy com os headers de
+[`docs/seguranca.md`](./docs/seguranca.md).
 
 ## 3. Como rodar
 
@@ -93,6 +90,7 @@ em `/cadastro` (recebe 14 categorias padrão). Configurações do navegador inte
 npm run check        # typecheck + lint (0 avisos) + prettier + vitest
 npm run build
 npm run test:e2e     # Playwright desktop + mobile (1ª vez: npx playwright install chromium)
+npm run test:e2e:api # mesmo, contra a fincore-api real (PGlite em memória, portas 8090/4180)
 ```
 
 Depois: verificar no navegador (desktop, celular, tema claro/escuro), atualizar
@@ -206,14 +204,26 @@ suporta 10), Vite 8, React 19, React Router 8, Tailwind 4, Vitest 5, Recharts 3,
   `npm run build` + E2E (`security.spec.ts`).
 - **Busca global**: o `CommandSearch` (camada `components`) recebe a fonte por
   `CommandSearchSourceContext`; novas entidades entram em `features/search`.
+- **Gravações compostas** (ADR 0015): nunca grave "A, depois B, e desfaça A se B falhar".
+  Prepare os lançamentos (`prepare`/`prepareRemoval`) e grave tudo pelo repositório da
+  feature — um `PUT` na API, um `store.write` no IndexedDB. Os helpers em memória
+  (`in-memory-goals`/`in-memory-investments`) simulam a falha da gravação única.
+- **Regras duplicadas cliente/servidor**: fatura (`invoices.ts`) e valor da posição
+  (`position.ts`) foram portados para `../fincore-api`. Mudou a regra? Mude os dois lados.
+- **Zod 4 e campos com `transform`**: se a validação do campo falha, o `transform` não roda,
+  mas os `refine` do objeto rodam — use `abort: true` no campo (como em `moneyField`) para
+  não chamar métodos sobre a string crua.
+- **E2E do modo API**: cada teste cadastra o próprio usuário; o seletor `getByLabel` precisa de
+  `exact: true` ("Saldo inicial" × "Data do saldo inicial", "Conta" × "Conta de pagamento").
+  Para ler um arquivo baixado sem `node:fs` (o tsconfig dos testes não tem tipos do Node),
+  capture o `Blob` de `URL.createObjectURL` na página.
 
 ## 9. Para retomar
 
-Todas as fases estão concluídas. Para continuar, diga ao assistente o que fazer a partir de
-**Próximos passos** (seção 2) ou de `PENDENCIAS.md`. O próximo combinado é
-**"finalizar a integração com o backend e validar"** (roteiro na seção 2). Ele deve:
+Todas as fases e a integração com o backend estão concluídas. Para continuar, diga ao
+assistente o que fazer a partir de **Próximo passo** (seção 2) ou de `PENDENCIAS.md`. Ele deve:
 
 1. ler este arquivo, `PENDENCIAS.md`, `docs/ROADMAP.md` e `PROJECT_STATUS.md`;
 2. rodar `git status` e `npm run check` para confirmar a base;
-3. documentar decisões relevantes em um novo ADR (próximo: 0015);
+3. documentar decisões relevantes em um novo ADR (próximo: 0016);
 4. fechar com o portão de qualidade e atualizar a documentação.

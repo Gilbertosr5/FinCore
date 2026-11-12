@@ -7,6 +7,7 @@ import type {
 } from '@/features/history/domain/audit-entry';
 import type { IsoDate } from '@/lib/dates';
 
+import type { Transaction } from '../domain/entities/transaction';
 import type {
   CategoryRepository,
   TransactionRepository,
@@ -24,6 +25,22 @@ export interface LedgerContext {
   today: () => IsoDate;
   /** Instante atual em ISO 8601 (para o histórico). */
   now: () => string;
+}
+
+/**
+ * Lançamentos validados e montados, mas ainda NÃO gravados: quem os pede (metas,
+ * investimentos) grava junto com o próprio registro, de forma atômica (ADR 0015),
+ * e chama `confirm` depois para registrar o histórico.
+ */
+export interface PreparedLedgerWrite {
+  transactions: Transaction[];
+  confirm: () => Promise<void>;
+}
+
+/** Lançamentos vinculados a remover junto com o registro de origem (lista vazia = já excluídos). */
+export interface PreparedLedgerRemoval {
+  transactionIds: string[];
+  confirm: () => Promise<void>;
 }
 
 export function auditEntry(

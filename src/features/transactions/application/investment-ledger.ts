@@ -1,7 +1,12 @@
 import type { IsoDate } from '@/lib/dates';
 import { formatMoney, type Money } from '@/lib/money';
 
-import { auditEntry, type LedgerContext } from './ledger-context';
+import {
+  auditEntry,
+  type LedgerContext,
+  type PreparedLedgerRemoval,
+  type PreparedLedgerWrite,
+} from './ledger-context';
 import type { Transaction } from '../domain/entities/transaction';
 import { TransactionError } from '../domain/errors/transaction-error';
 import {
@@ -31,12 +36,13 @@ export interface InvestmentLedgerInput {
 /**
  * Lançamentos de conta gerados pelo módulo de investimentos (ADR 0012). São
  * "gerenciados": não podem ser editados pela tela de Transações (ADR 0009) —
- * só criados e removidos por aqui, junto com a movimentação da carteira.
+ * só criados e removidos por aqui, junto com a movimentação da carteira — na
+ * mesma gravação (ADR 0015): estes comandos só validam e montam o lançamento.
  */
 export class InvestmentLedgerCommands {
   constructor(private readonly context: LedgerContext) {}
 
-  async record(input: InvestmentLedgerInput): Promise<string> {
+  async prepare(input: InvestmentLedgerInput): Promise<PreparedLedgerWrite> {
     assertValidAmount(input.amount);
     assertPaidDate(input.date, this.context.today());
     assertUsableAccount((await this.context.accounts.findById(input.accountId)) ?? undefined);
@@ -71,32 +77,38 @@ export class InvestmentLedgerCommands {
       tags: [],
       notes: null,
     };
-    await this.context.transactions.commit({ upsert: [transaction] });
-    await this.context.audit.append([
-      auditEntry(
-        this.context,
-        'transaction',
-        transaction.id,
-        'created',
-        `${description}: ${formatMoney(input.amount)} (registrado em Investimentos).`,
-      ),
-    ]);
-    return transaction.id;
+    return {
+      transactions: [transaction],
+      confirm: () =>
+        this.context.audit.append([
+          auditEntry(
+            this.context,
+            'transaction',
+            transaction.id,
+            'created',
+            `${description}: ${formatMoney(input.amount)} (registrado em Investimentos).`,
+          ),
+        ]),
+    };
   }
 
-  /** Remove o lançamento vinculado (ignora se já foi excluído). */
-  async remove(transactionId: string): Promise<void> {
+  /** Lançamento vinculado a remover junto com a movimentação (vazio se já foi excluído). */
+  async prepareRemoval(transactionId: string): Promise<PreparedLedgerRemoval> {
     const transaction = await this.context.transactions.findById(transactionId);
-    if (!transaction) return;
-    await this.context.transactions.commit({ remove: [transactionId] });
-    await this.context.audit.append([
-      auditEntry(
-        this.context,
-        'transaction',
-        transactionId,
-        'deleted',
-        `Excluído junto com a movimentação de investimento: ${transaction.description}.`,
-      ),
-    ]);
+    return {
+      transactionIds: transaction ? [transaction.id] : [],
+      confirm: async () => {
+        if (!transaction) return;
+        await this.context.audit.append([
+          auditEntry(
+            this.context,
+            'transaction',
+            transaction.id,
+            'deleted',
+            `Excluído junto com a movimentação de investimento: ${transaction.description}.`,
+          ),
+        ]);
+      },
+    };
   }
 }

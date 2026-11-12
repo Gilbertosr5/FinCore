@@ -35,13 +35,16 @@ export function createInMemoryGoals(
       return Promise.resolve();
     },
     findContributions: () => Promise.resolve([...contributions.values()]),
-    saveContribution: (contribution) => {
+    // Gravação atômica: com falha simulada, nem o aporte nem a transferência ficam.
+    saveContribution: (contribution, legs = []) => {
       if (failures.saveContribution) return Promise.reject(new Error('falha simulada'));
       contributions.set(contribution.id, contribution);
+      for (const leg of legs) ledger.state.transactions.set(leg.id, leg);
       return Promise.resolve();
     },
-    removeContribution: (id) => {
+    removeContribution: (id, legIds = []) => {
       contributions.delete(id);
+      for (const legId of legIds) ledger.state.transactions.delete(legId);
       return Promise.resolve();
     },
   };
@@ -50,13 +53,9 @@ export function createInMemoryGoals(
     ...ledger.context,
     goals: repository,
     transfers: {
-      create: (input) => ledger.ledger.createTransfer.execute(input),
-      remove: async (transferId) => {
-        const leg = [...ledger.state.transactions.values()].find(
-          (tx) => tx.transfer?.id === transferId,
-        );
-        if (leg) await ledger.ledger.remove.execute(leg.id);
-      },
+      prepare: (input) => ledger.ledger.createTransfer.prepare(input),
+      prepareRemoval: (transferId) =>
+        ledger.ledger.createTransfer.prepareRemoval(transferId, 'Excluído junto com o aporte'),
     },
   });
 
