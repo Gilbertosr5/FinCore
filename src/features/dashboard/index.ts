@@ -20,4 +20,10 @@ export {
   type DashboardServices,
 } from './presentation/context/dashboard-context';
 export { dashboardQueryKeys } from './presentation/hooks/use-dashboard-overview';
+export { PeriodFilter } from './presentation/components/PeriodFilter';
+export {
+  parsePeriodParams,
+  periodToParams,
+  usePeriodSelection,
+} from './presentation/hooks/use-period-selection';
 export { FinancialNotifications } from './presentation/components/FinancialNotifications';

@@ -1,9 +1,10 @@
 # Contrato HTTP com o backend (rascunho)
 
-> **Status:** o backend (Java + Spring Boot + PostgreSQL) **ainda não existe**.
-> Este documento define as convenções que o frontend espera. Nenhum endpoint
-> descrito aqui está disponível. Os contratos de cada módulo serão adicionados
-> nas fases correspondentes (autenticação na Fase 2).
+> **Status:** implementado pelo backend **Node.js + TypeScript + PostgreSQL** em
+> [`../../fincore-api`](../../fincore-api/README.md) (11/11/2026; antes previsto em
+> Java + Spring Boot). Exceções: `GET /market/indicators` responde `501`. Ainda não
+> testado ponta a ponta com o frontend. Menções a Spring abaixo descrevem o
+> comportamento equivalente (ex.: cookie `XSRF-TOKEN`).
 
 ## Convenções gerais
 
@@ -230,3 +231,22 @@ Lançamentos de conta gerados por movimentações usam `POST /transactions/batch
 ao backend: aceitar movimentação + lançamento em uma única requisição atômica.
 
 Histórico (`/audit-log`): `entityType` aceita também `asset`.
+
+## Calendário, relatórios e lembretes (Fase 8)
+
+Regras: [ADR 0013](./adr/0013-calendario-relatorios-e-exportacao.md). Calendário e
+relatórios **não** têm endpoints próprios: são derivados dos recursos existentes e
+exportados no navegador (CSV/PDF). Com volume real, o backend poderá oferecer
+agregações paginadas (ex.: `GET /reports/{tipo}?de=&ate=&conta=`) devolvendo a mesma
+estrutura de tabela (`columns`, `rows`, `totals`, `notes`).
+
+**Lembretes (contrato futuro — não implementado):**
+
+| Método | Caminho                  | Corpo                       | Observações                                                      |
+| ------ | ------------------------ | --------------------------- | ---------------------------------------------------------------- |
+| GET    | `/reminders/preferences` | —                           | `{ channels: ["email"\|"push"], daysBefore: number, types: [] }` |
+| PUT    | `/reminders/preferences` | Preferências                | Tipos: `payable`, `receivable`, `invoice`, `goal`                |
+| POST   | `/push/subscriptions`    | Web Push `PushSubscription` | Registro do navegador para notificações push                     |
+
+O cliente não agenda nem envia lembretes; os vencimentos próximos aparecem na
+central de notificações (ADR 0010).

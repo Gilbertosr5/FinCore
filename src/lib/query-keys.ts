@@ -15,6 +15,8 @@ export const QUERY_ROOTS = {
   budgets: 'budgets',
   goals: 'goals',
   investments: 'investments',
+  calendar: 'calendar',
+  reports: 'reports',
   planning: 'planning',
 } as const;
 

@@ -3,6 +3,7 @@ import {
   addMonths,
   addYears,
   asIsoDate,
+  dayOfWeek,
   daysInMonth,
   differenceInDays,
   endOfMonth,
@@ -15,6 +16,7 @@ import {
   isWithinRange,
   parseDateBR,
   startOfMonth,
+  startOfWeek,
   todayIn,
 } from './iso-date';
 
@@ -123,5 +125,15 @@ describe('fuso horário', () => {
   it('valida identificadores IANA', () => {
     expect(isValidTimeZone('America/Sao_Paulo')).toBe(true);
     expect(isValidTimeZone('Mars/Olympus')).toBe(false);
+  });
+});
+
+describe('semana', () => {
+  it('dia da semana e início da semana (domingo)', () => {
+    expect(dayOfWeek(asIsoDate('2026-11-08'))).toBe(0);
+    expect(dayOfWeek(asIsoDate('2026-11-14'))).toBe(6);
+    expect(startOfWeek(asIsoDate('2026-11-11'))).toBe('2026-11-08');
+    // Virada de ano.
+    expect(startOfWeek(asIsoDate('2027-01-01'))).toBe('2026-12-27');
   });
 });

@@ -15,45 +15,43 @@ escreve em **português do Brasil**; responda sempre em pt-BR.
 - O que já foi entregue, testes e problemas conhecidos: [`PROJECT_STATUS.md`](./PROJECT_STATUS.md)
 - **Todas as pendências acumuladas** (fases restantes, itens adiados, backend, decisões a confirmar): [`PENDENCIAS.md`](./PENDENCIAS.md)
 - Prompt pronto para abrir uma nova sessão: [`docs/PROMPT_NOVA_SESSAO.md`](./docs/PROMPT_NOVA_SESSAO.md)
-- Decisões arquiteturais: [`docs/adr/`](./docs/adr/) (0001–0012)
+- Decisões arquiteturais: [`docs/adr/`](./docs/adr/) (0001–0013)
 - Contratos HTTP com o backend futuro: [`docs/api-contract.md`](./docs/api-contract.md),
   [`docs/auth-contract.md`](./docs/auth-contract.md)
 
 ## 2. Estado atual
 
-| Fase | Descrição                                                                     | Status                                                                                        |
-| ---- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| 1–4  | Fundação, autenticação/layout, dashboard, gestão financeira                   | ✅ (commits "Fase 1 e Fase 2", "Fase 3", "Fase 4")                                            |
-| 5–6  | Cartões e orçamentos; metas e planejamento                                    | ✅ concluídas em 11/11/2026 — **não commitadas** (junto com a Fase 7)                         |
-| 7    | Investimentos (custo médio, movimentações com conta, avaliações, indicadores) | ✅ concluída em 11/11/2026 — **não commitada** (o usuário faz o commit; confira `git status`) |
-| 8    | Calendário e relatórios                                                       | ⏳ **próxima**                                                                                |
-| 9    | Qualidade final                                                               | —                                                                                             |
+| Fase | Descrição                                                             | Status                                                                                        |
+| ---- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1–4  | Fundação, autenticação/layout, dashboard, gestão financeira           | ✅ (commits "Fase 1 e Fase 2", "Fase 3", "Fase 4")                                            |
+| 5–7  | Cartões e orçamentos; metas e planejamento; investimentos             | ✅ concluídas em 11/11/2026 — **não commitadas** (junto com a Fase 8)                         |
+| 8    | Calendário e relatórios (eventos derivados, 11 relatórios, CSV e PDF) | ✅ concluída em 11/11/2026 — **não commitada** (o usuário faz o commit; confira `git status`) |
+| 9    | Finalização e qualidade                                               | ⏳ **próxima**                                                                                |
 
-Última verificação completa: `npm run check` (478 testes), `npm run build` e
-`npm run test:e2e` (35 aprovados, 1 ignorado de propósito) — tudo verde.
+Última verificação completa: `npm run check` (508 testes), `npm run build` e
+`npm run test:e2e` (39 aprovados, 1 ignorado de propósito) — tudo verde.
 Detalhes do que existe: [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
 
-### Fase 8 — roteiro sugerido (Calendário e relatórios)
+### Fase 9 — roteiro sugerido (Finalização e qualidade)
 
-Requisitos completos em [`docs/ROADMAP.md`](./docs/ROADMAP.md#fase-8--calendário-e-relatórios).
-Quase tudo é **leitura e agregação** do que já existe — reutilize, não recalcule:
-`getFinancialEntries` e `collectFlows` (receitas/despesas por competência),
-`computeAccountBalances`, `buildInvoices`/`getInvoiceDates` (vencimentos de faturas),
-`buildMissingOccurrences` (recorrências futuras), `computeBudgetUsage`,
-`computeGoalProgress`, `computePortfolio`/`buildEvolution` e o dashboard.
+Requisitos em [`docs/ROADMAP.md`](./docs/ROADMAP.md#fase-9--finalização-e-qualidade) e
+pendências técnicas em [`PENDENCIAS.md`](./PENDENCIAS.md). Todos os módulos estão
+entregues; a fase é de **revisão**, não de funcionalidades novas grandes.
 
-- [ ] **Calendário** (`/calendario`): eventos de contas a pagar/receber, vencimentos de
-      faturas, parcelas, receitas previstas, recorrências, aportes e prazos de metas;
-      visão mensal e semanal, navegação, detalhes, filtros por tipo. Lembretes: só o
-      **contrato** (push/e-mail dependem do backend)
-- [ ] **Relatórios** (`/relatorios`): receitas/despesas por período, categoria e conta,
-      evolução patrimonial e dos investimentos, orçamento × realizado, histórico de
-      economia, fluxo de caixa, compromissos futuros; indicadores (taxa de poupança,
-      comprometimento da renda, média mensal, fixas × variáveis via `category.nature`)
-- [ ] **Exportação CSV e PDF** respeitando exatamente período e filtros da tela;
-      escolher biblioteca de PDF (pendência antiga) — carregar sob demanda (não no chunk `App`)
-- [ ] Filtros na URL; tabelas acessíveis; testes de regras (agregações batem com os
-      módulos), integração e E2E; ADR 0013; docs e este arquivo
+- [ ] **Acessibilidade**: auditoria (axe/Lighthouse) em todas as rotas, desktop e celular,
+      temas claro e escuro; navegação por teclado (grade do calendário, menus, diálogos);
+      contraste dos tons de alerta; foco após fechar diálogos
+- [ ] **Performance**: carregar o seed de demonstração e o dashboard sob demanda (chunk
+      `App` ~339 kB); medir com o build de produção; memoização dos cálculos pesados
+      (relatórios com 5 anos, carteira); revisar consultas que leem tudo
+- [ ] **Segurança**: revisar CSP/headers do build, `npm audit` (dev), dados no IndexedDB,
+      exportações (injeção em CSV já tratada), mensagens de erro
+- [ ] **Tratamento de erros**: estados de erro/repetição em todas as telas; erros de
+      gravação no IndexedDB; testes dos adaptadores REST (fake HTTP)
+- [ ] **Pendências pequenas** de `PENDENCIAS.md` que cabem na fase (ex.: busca global com
+      entidades, breadcrumbs gerais, Configurações: moeda/formato de data/fuso/exportar dados)
+- [ ] **E2E**: revisar a suíte (fluxos ponta a ponta por módulo), estabilidade e tempo
+- [ ] **Documentação final**: README, guia de arquitetura, contratos, ADR 0014; este arquivo
 
 ## 3. Como rodar
 
@@ -158,6 +156,14 @@ suporta 10), Vite 8, React 19, React Router 8, Tailwind 4, Vitest 5, Recharts 3,
 - **Metas:** aportes com transferência usam `GoalTransferPort` (ligado em `DataProvider`
   aos casos de uso de lançamentos). `tests/helpers/in-memory-goals.ts` simula falha de
   gravação para testar a compensação.
+- **Escapes de Unicode viram caracteres reais** ao gravar arquivos pelas ferramentas (NBSP, BOM,
+  acentos combinantes) — o ESLint pega só alguns. Use `String.fromCharCode(0xa0)` e similares e
+  rode a varredura de caracteres invisíveis (ver Fase 8 no `PROJECT_STATUS.md`).
+- **Servidor de preview**: `preview_stop` + `preview_start` pode trocar a porta; outra sessão
+  costuma ocupar a 5173. Se o navegador interno recusar a nova porta, reinicie de novo até
+  voltar a uma porta já liberada. HMR com módulo "sem export" = reinicie o servidor.
+- **Relatórios = tabela única** (`ReportTable`): tela, CSV e PDF vêm dela. Novos relatórios
+  devem só produzir a tabela; nunca formatar exportação à parte.
 - **Investimentos:** lançamentos de conta de aplicações/resgates/proventos são criados por
   `InvestmentLedgerCommands` (porta `InvestmentLedgerPort`); `tests/helpers/in-memory-investments.ts`
   simula falha para testar a compensação. Valor atual = última avaliação + operações
@@ -173,7 +179,7 @@ suporta 10), Vite 8, React 19, React Router 8, Tailwind 4, Vitest 5, Recharts 3,
 
 ## 9. Para retomar
 
-Diga ao assistente: **"Leia `fincore/CONTINUAR.md` e inicie a Fase 8"** (ou a
+Diga ao assistente: **"Leia `fincore/CONTINUAR.md` e inicie a Fase 9"** (ou a
 próxima fase pendente). Ele deve:
 
 1. ler este arquivo, `PENDENCIAS.md`, `docs/ROADMAP.md` e `PROJECT_STATUS.md`;

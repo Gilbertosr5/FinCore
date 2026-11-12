@@ -26,7 +26,7 @@ sem reestruturação.
 | 5    | Cartões, faturas, orçamentos e alertas                                       | ✅ Concluída |
 | 6    | Metas e planejamento financeiro                                              | ✅ Concluída |
 | 7    | Investimentos                                                                | ✅ Concluída |
-| 8    | Calendário e relatórios (PDF/CSV)                                            | ⏳           |
+| 8    | Calendário e relatórios (PDF/CSV)                                            | ✅ Concluída |
 | 9    | Qualidade final: acessibilidade, performance, segurança                      | ⏳           |
 
 ## Stack tecnológica
@@ -260,6 +260,18 @@ Em produção, `VITE_AUTH_ADAPTER=dev` é bloqueado (exceto com `VITE_DEMO_MODE=
   atual e reavaliação sugerida.
 - Regras: [ADR 0012](./docs/adr/0012-investimentos-custo-medio-e-indicadores.md).
 
+## Calendário e relatórios
+
+- **Calendário** (`/calendario`): contas a pagar e a receber, transferências agendadas,
+  recorrências previstas, vencimentos de faturas e prazos de metas, em visão mensal ou
+  semanal, com filtros por tipo e detalhes do dia.
+- **Relatórios** (`/relatorios`): 11 relatórios (resumo, mensal, por categoria, por
+  conta, fluxo de caixa, orçamento × realizado, patrimônio, investimentos, economia e
+  compromissos futuros) com indicadores e filtros de período e conta.
+- **Exportação** em **CSV** (pronto para Excel em pt-BR) e **PDF**, geradas no navegador
+  a partir da mesma tabela exibida.
+- Regras: [ADR 0013](./docs/adr/0013-calendario-relatorios-e-exportacao.md).
+
 ## Dashboard
 
 Indicadores (patrimônio líquido, saldo, receitas, despesas, resultado, taxa de
@@ -335,3 +347,4 @@ documentados nas respectivas fases.
 - [0010 — Cartões, faturas, orçamentos e central de notificações](./docs/adr/0010-cartoes-orcamentos-e-notificacoes.md)
 - [0011 — Metas, aportes, planejamento e projeções](./docs/adr/0011-metas-e-planejamento.md)
 - [0012 — Investimentos: custo médio, movimentações com conta e indicadores](./docs/adr/0012-investimentos-custo-medio-e-indicadores.md)
+- [0013 — Calendário financeiro, relatórios e exportação CSV/PDF](./docs/adr/0013-calendario-relatorios-e-exportacao.md)

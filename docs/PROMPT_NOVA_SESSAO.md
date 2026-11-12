@@ -16,8 +16,8 @@ Antes de qualquer alteração, leia nesta ordem:
 
 Depois:
 - rode `git status` e `npm run check` dentro de fincore/ para confirmar que a base está verde;
-- inicie a próxima fase pendente indicada no CONTINUAR.md (hoje: Fase 8 —
-  Calendário e relatórios), reutilizando o domínio que já existe, sem reescrever o que funciona;
+- inicie a próxima fase pendente indicada no CONTINUAR.md (hoje: Fase 9 —
+  Finalização e qualidade), reutilizando o domínio que já existe, sem reescrever o que funciona;
 - trabalhe de forma autônoma nas decisões técnicas comuns, documentando as relevantes
   em um novo ADR;
 - ao final da fase, rode o portão de qualidade (`npm run check`, `npm run build`,

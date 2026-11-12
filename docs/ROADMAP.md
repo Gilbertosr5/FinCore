@@ -9,7 +9,7 @@
 > "Iniciar a próxima fase pendente". Ao fim de cada fase: `npm run check`, `npm run build`,
 > `npm run test:e2e`, verificação no navegador e atualização do `PROJECT_STATUS.md`.
 
-## Estado atual (11/11/2026 — após a Fase 7)
+## Estado atual (11/11/2026 — após a Fase 8)
 
 | Fase | Descrição               | Status     |
 | ---- | ----------------------- | ---------- |
@@ -20,8 +20,8 @@
 | 5    | Cartões e orçamentos    | ✅         |
 | 6    | Metas e planejamento    | ✅         |
 | 7    | Investimentos           | ✅         |
-| 8    | Calendário e relatórios | ⏳ próxima |
-| 9    | Finalização e qualidade | —          |
+| 8    | Calendário e relatórios | ✅         |
+| 9    | Finalização e qualidade | ⏳ próxima |
 
 Já existem (e devem ser reutilizados, não reescritos): domínio e regras de
 contabilização de contas, transações, cartões/faturas, orçamentos, metas e
@@ -182,6 +182,9 @@ usam o tipo de movimentação `investment` (já existe).
 ---
 
 ## FASE 8 — Calendário e relatórios
+
+> ✅ **Concluída em 11/11/2026** — ver [`PROJECT_STATUS.md`](../PROJECT_STATUS.md) e
+> [ADR 0013](./adr/0013-calendario-relatorios-e-exportacao.md).
 
 **Implementar:** calendário financeiro, relatórios, filtros, exportações PDF e
 CSV, indicadores históricos.

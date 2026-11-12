@@ -52,9 +52,13 @@ describe('estrutura da aplicação (autenticado)', () => {
     );
   });
 
-  it('informa explicitamente que módulos futuros ainda não foram entregues', async () => {
-    await renderApp('/calendario', { authenticated: true });
-    expect(await screen.findByText('Previsto para a Fase 8')).toBeInTheDocument();
+  it('todos os módulos da navegação têm tela real (nenhum aviso de "previsto")', async () => {
+    // Fase 8: os 11 módulos estão entregues; o aviso de fase futura não aparece mais.
+    await renderApp('/relatorios', { authenticated: true });
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Relatórios' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Previsto para a Fase/)).toBeNull();
   });
 
   it('exibe página 404 para rotas inexistentes', async () => {

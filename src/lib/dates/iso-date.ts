@@ -195,3 +195,13 @@ export function formatMonthYear(date: IsoDate): string {
   // Meio-dia local: evita qualquer deslocamento de dia por fuso/horário de verão.
   return formatDateFns(new Date(year, month - 1, 1, 12), "MMMM 'de' yyyy", { locale: ptBR });
 }
+
+/** Dia da semana: 0 = domingo … 6 = sábado (calendário, sem fuso). */
+export function dayOfWeek(date: IsoDate): number {
+  return toUtcDate(date).getUTCDay();
+}
+
+/** Domingo da semana que contém a data (semana de domingo a sábado). */
+export function startOfWeek(date: IsoDate): IsoDate {
+  return addDays(date, -dayOfWeek(date));
+}

@@ -13,6 +13,11 @@ import {
   type BudgetsServices,
 } from '@/features/budgets';
 import {
+  CalendarServicesContext,
+  GetCalendarEventsUseCase,
+  type CalendarServices,
+} from '@/features/calendar';
+import {
   createCreditCardUseCases,
   CreditCardsServicesContext,
   type CreditCardsServices,
@@ -34,6 +39,11 @@ import {
   PlanningServicesContext,
   type PlanningServices,
 } from '@/features/planning';
+import {
+  LoadReportDataUseCase,
+  ReportsServicesContext,
+  type ReportsServices,
+} from '@/features/reports';
 import { DemoDataContext, type DemoDataManager } from '@/features/settings';
 import {
   createTransactionUseCases,
@@ -113,6 +123,25 @@ function createServices(layer: DataLayer, today: () => IsoDate) {
     }),
     today,
   };
+  const calendar: CalendarServices = {
+    events: new GetCalendarEventsUseCase({
+      ...ledgerContext,
+      cards: repositories.creditCards,
+      goals: repositories.goals,
+      prepare,
+    }),
+    today,
+  };
+  const reports: ReportsServices = {
+    load: new LoadReportDataUseCase({
+      ...ledgerContext,
+      cards: repositories.creditCards,
+      budgets: repositories.budgets,
+      investments: repositories.investments,
+      prepare,
+    }),
+    isDemoData: layer.demoStore !== null,
+  };
   const goals: GoalsServices = {
     useCases: createGoalUseCases({
       ...ledgerContext,
@@ -168,6 +197,8 @@ function createServices(layer: DataLayer, today: () => IsoDate) {
     budgets,
     goals,
     investments,
+    calendar,
+    reports,
     planning,
     dashboard,
     history,
@@ -203,11 +234,15 @@ export function DataProvider({ children, dataLayer, today = defaultToday }: Data
               <GoalsServicesContext.Provider value={services.goals}>
                 <PlanningServicesContext.Provider value={services.planning}>
                   <InvestmentsServicesContext.Provider value={services.investments}>
-                    <HistoryServicesContext.Provider value={services.history}>
-                      <DemoDataContext.Provider value={services.demo}>
-                        {children}
-                      </DemoDataContext.Provider>
-                    </HistoryServicesContext.Provider>
+                    <CalendarServicesContext.Provider value={services.calendar}>
+                      <ReportsServicesContext.Provider value={services.reports}>
+                        <HistoryServicesContext.Provider value={services.history}>
+                          <DemoDataContext.Provider value={services.demo}>
+                            {children}
+                          </DemoDataContext.Provider>
+                        </HistoryServicesContext.Provider>
+                      </ReportsServicesContext.Provider>
+                    </CalendarServicesContext.Provider>
                   </InvestmentsServicesContext.Provider>
                 </PlanningServicesContext.Provider>
               </GoalsServicesContext.Provider>

@@ -109,6 +109,16 @@ const loadAssetDetailsPage = () =>
     Component: m.AssetDetailsPage,
   }));
 
+const loadCalendarPage = () =>
+  import('@/features/calendar/presentation/pages/CalendarPage').then((m) => ({
+    Component: m.CalendarPage,
+  }));
+
+const loadReportsPage = () =>
+  import('@/features/reports/presentation/pages/ReportsPage').then((m) => ({
+    Component: m.ReportsPage,
+  }));
+
 /** Módulos já entregues (rota real); os demais exibem placeholder com a fase prevista. */
 const deliveredModuleRoutes: RouteObject[] = [
   { path: ROUTES.dashboard, lazy: loadDashboardPage },
@@ -123,6 +133,8 @@ const deliveredModuleRoutes: RouteObject[] = [
   { path: ROUTES.planning, lazy: loadPlanningPage },
   { path: ROUTES.investments, lazy: loadInvestmentsPage },
   { path: `${ROUTES.investments}/:assetId`, lazy: loadAssetDetailsPage },
+  { path: ROUTES.calendar, lazy: loadCalendarPage },
+  { path: ROUTES.reports, lazy: loadReportsPage },
   { path: ROUTES.settings, lazy: loadSettingsPage },
 ];
 

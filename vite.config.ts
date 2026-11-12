@@ -15,6 +15,11 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: false,
+    // Encaminha /api ao backend (fincore-api) — mesma origem para cookies e CSRF.
+    // Usado com `npm run dev:api` (.env.api). Destino: FINCORE_API_URL ou :8080.
+    proxy: {
+      '/api': process.env.FINCORE_API_URL ?? 'http://localhost:8080',
+    },
   },
   build: {
     sourcemap: true,

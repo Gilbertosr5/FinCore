@@ -1,6 +1,6 @@
 # FinCore — Status do Projeto
 
-_Última atualização: 11/11/2026 — Fase 7 concluída._
+_Última atualização: 11/11/2026 — Fase 8 concluída._
 
 > Para retomar em um novo chat, leia [`CONTINUAR.md`](./CONTINUAR.md). Pendências consolidadas: [`PENDENCIAS.md`](./PENDENCIAS.md).
 
@@ -15,10 +15,114 @@ _Última atualização: 11/11/2026 — Fase 7 concluída._
 | 5    | Cartões e orçamentos    | ✅ Concluída |
 | 6    | Metas e planejamento    | ✅ Concluída |
 | 7    | Investimentos           | ✅ Concluída |
-| 8    | Calendário e relatórios | ⏳ Próxima   |
-| 9    | Finalização e qualidade | —            |
+| 8    | Calendário e relatórios | ✅ Concluída |
+| 9    | Finalização e qualidade | ⏳ Próxima   |
 
-## Fase 7 — Implementado
+## Fase 8 — Implementado
+
+Regras em [ADR 0013](./docs/adr/0013-calendario-relatorios-e-exportacao.md).
+
+**Calendário (`/calendario`)**
+
+- Eventos derivados dos módulos: contas a pagar/receber, transferências agendadas,
+  recorrências futuras (previstas), vencimentos de faturas e prazos de metas.
+- Visão mensal (semanas de domingo a sábado) e semanal, navegação, dia selecionado
+  com detalhes e link para o módulo, filtros por tipo e "mostrar realizados" (na URL),
+  resumo do período (a pagar, a receber, vencidos).
+- Lembretes: vencimentos na central de notificações; e-mail/push só como contrato.
+
+**Relatórios (`/relatorios`)**
+
+- 11 relatórios: resumo e indicadores, receitas e despesas por mês, despesas e receitas
+  por categoria (fixas × variáveis), movimentação por conta, fluxo de caixa, orçamento ×
+  realizado, evolução patrimonial, evolução dos investimentos, histórico de economia e
+  compromissos futuros.
+- Indicadores: taxa de poupança, comprometimento da renda, média mensal de despesas,
+  patrimônio líquido e investido.
+- Filtros na URL (período do dashboard, relatório, conta); observações de metodologia.
+- **Exportação CSV** (pt-BR, `;`, BOM, proteção contra fórmulas) e **PDF** (jsPDF sob
+  demanda, com período, conta, data de geração e aviso de demonstração) — gerados da
+  mesma tabela exibida.
+
+**Infraestrutura**: features `calendar` e `reports` (domínio puro + leitura única dos
+repositórios), `lib/export` (CSV, PDF, download), `dayOfWeek`/`startOfWeek` em
+`lib/dates`, `PeriodFilter` exportado pelo dashboard. Dependências novas:
+`jspdf@4.2.1` e `jspdf-autotable@5.0.9` (`npm audit --omit=dev`: 0).
+
+**Correções durante a fase**: escapes `\u` gravados como caracteres invisíveis
+(espaço não separável, BOM, acentos combinantes) — trocados por `String.fromCharCode`
+e verificados por varredura; todos os módulos da navegação passaram a ter tela real.
+
+## Testes executados (Fase 8)
+
+| Verificação                     | Resultado                                                                 |
+| ------------------------------- | ------------------------------------------------------------------------- |
+| `npm run typecheck`             | ✅ sem erros                                                              |
+| `npm run lint`                  | ✅ 0 erros, 0 avisos                                                      |
+| `npm run format:check`          | ✅                                                                        |
+| `npm test`                      | ✅ 46 arquivos, 508 testes                                                |
+| `npm run test:e2e`              | ✅ 39 aprovados, 1 ignorado de propósito (atalho de teclado no mobile)    |
+| `npm run build`                 | ✅ sem aviso de chunk acima de 500 kB; jsPDF fora do carregamento inicial |
+| Verificação manual no navegador | ✅ calendário (celular, escuro) e relatórios (desktop, claro)             |
+
+Novas suítes: `calendar` (eventos e grade), `reports` (entradas, indicadores e
+relatórios com valores calculados à mão), `export` (CSV, nome de arquivo, PDF real),
+`report-export` (CSV/PDF = tabela), `tests/integration/calendar-reports`
+(inclui CSV baixado = tabela da tela), `tests/e2e/calendar-reports.spec` (downloads).
+
+## Funcionalidades pendentes
+
+- **Fase 9 — Finalização e qualidade** (requisitos em [`docs/ROADMAP.md`](./docs/ROADMAP.md)).
+- Anexos em lançamentos (depende de armazenamento de arquivos no backend).
+- Configurações: moeda, formato de data, fuso, notificações, exportação/exclusão.
+- Detalhes em [`PENDENCIAS.md`](./PENDENCIAS.md).
+
+## Problemas conhecidos
+
+- Nenhum problema crítico.
+- O seed é relativo à data em que foi gerado; as recorrências avançam sozinhas,
+  mas gastos variáveis só existem até a data de geração — use Configurações →
+  Restaurar dados para um cenário atualizado.
+- Bundle inicial: chunk `App` ~339 kB (102 kB gzip); jsPDF fica em chunks sob demanda + `index` ~255 kB (81 kB gzip) —
+  avaliar carregar o seed e o dashboard sob demanda na Fase 9.
+- `npm audit`: vulnerabilidades moderadas apenas em dependências de
+  desenvolvimento (plugins de ESLint); produção: 0.
+- Investimentos: retorno simples (não TWR/MWR), sem IR/come-cotas nem eventos
+  corporativos; valores dependem de avaliações manuais até haver cotações (ADR 0012).
+- Projeções do planejamento são simplificadas (sem sazonalidade, inflação ou data
+  exata de pagamento das faturas — ADR 0011) e sempre rotuladas como estimativa.
+- Histórico de orçamentos compara períodos passados com o limite **atual**; alterar
+  os dias de fechamento de um cartão recalcula todas as faturas (ADR 0010).
+
+## Decisões arquiteturais
+
+- ADR 0001–0008 (Fases 1–3).
+- **ADR 0009** — ids no cliente (gravações idempotentes), lote atômico do livro de
+  lançamentos, transferências, parcelas, recorrências materializadas, situações,
+  contas, categorias e histórico de alterações.
+- **ADR 0010** — faturas derivadas e fatura aberta pelo calendário, compra como
+  registro único, limite disponível, pagamento como `card_payment` (parcial,
+  antecipado, estorno), orçamentos (unicidade, consumo compartilhado, histórico) e
+  central de notificações.
+- **ADR 0011** — metas (progresso derivado, aporte com transferência opcional e
+  compensação, projeção pelo ritmo), planejamento sem gravação (fluxos por
+  competência, estimativa de variáveis, projeção de saldo, cenários, grande compra,
+  plano anual/mensal) e simulador de juros compostos.
+- **ADR 0012** — investimentos: custo médio e resultados realizados, valor atual
+  ajustado após a avaliação, movimentações com lançamento opcional na conta
+  (compensação), reavaliação sugerida e contrato de indicadores de mercado.
+- **ADR 0013** — calendário com eventos derivados, relatórios como tabela única
+  (tela = CSV = PDF), indicadores, CSV pt-BR com proteção contra fórmulas e PDF com
+  jsPDF sob demanda; lembretes apenas como contrato.
+
+## Próximas etapas
+
+Iniciar a **Fase 9 — Finalização e qualidade** (requisitos em
+[`docs/ROADMAP.md`](./docs/ROADMAP.md)).
+
+## Histórico — Fase 7
+
+### Fase 7 — Implementado
 
 Regras em [ADR 0012](./docs/adr/0012-investimentos-custo-medio-e-indicadores.md).
 
@@ -53,7 +157,7 @@ transações, domínio com custo médio (`replayMovements`, `findOversell`) e an
 **Correções durante a fase**: o valor atual ficava "parado" na última avaliação e
 ignorava aplicações posteriores — agora são somadas pelo custo e sinalizadas.
 
-## Testes executados (Fase 7)
+### Testes executados (Fase 7)
 
 | Verificação                     | Resultado                                                                                     |
 | ------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -68,53 +172,6 @@ ignorava aplicações posteriores — agora são somadas pelo custo e sinalizada
 Novas suítes: `investment-use-cases`, `market-indicators` (REST), casos novos em
 `portfolio` (custo médio, realizado, renda fixa, ordem no dia),
 `tests/integration/investments`, `tests/e2e/investments.spec`.
-
-## Funcionalidades pendentes
-
-- **Fase 8 — Calendário e relatórios** (requisitos em [`docs/ROADMAP.md`](./docs/ROADMAP.md)).
-- Anexos em lançamentos (depende de armazenamento de arquivos no backend).
-- Configurações: moeda, formato de data, fuso, notificações, exportação/exclusão.
-- Detalhes em [`PENDENCIAS.md`](./PENDENCIAS.md).
-
-## Problemas conhecidos
-
-- Nenhum problema crítico.
-- O seed é relativo à data em que foi gerado; as recorrências avançam sozinhas,
-  mas gastos variáveis só existem até a data de geração — use Configurações →
-  Restaurar dados para um cenário atualizado.
-- Bundle inicial: chunk `App` ~413 kB (127 kB gzip) + `index` ~255 kB (81 kB gzip) —
-  avaliar carregar o seed e o dashboard sob demanda na Fase 9.
-- `npm audit`: vulnerabilidades moderadas apenas em dependências de
-  desenvolvimento (plugins de ESLint); produção: 0.
-- Investimentos: retorno simples (não TWR/MWR), sem IR/come-cotas nem eventos
-  corporativos; valores dependem de avaliações manuais até haver cotações (ADR 0012).
-- Projeções do planejamento são simplificadas (sem sazonalidade, inflação ou data
-  exata de pagamento das faturas — ADR 0011) e sempre rotuladas como estimativa.
-- Histórico de orçamentos compara períodos passados com o limite **atual**; alterar
-  os dias de fechamento de um cartão recalcula todas as faturas (ADR 0010).
-
-## Decisões arquiteturais
-
-- ADR 0001–0008 (Fases 1–3).
-- **ADR 0009** — ids no cliente (gravações idempotentes), lote atômico do livro de
-  lançamentos, transferências, parcelas, recorrências materializadas, situações,
-  contas, categorias e histórico de alterações.
-- **ADR 0010** — faturas derivadas e fatura aberta pelo calendário, compra como
-  registro único, limite disponível, pagamento como `card_payment` (parcial,
-  antecipado, estorno), orçamentos (unicidade, consumo compartilhado, histórico) e
-  central de notificações.
-- **ADR 0011** — metas (progresso derivado, aporte com transferência opcional e
-  compensação, projeção pelo ritmo), planejamento sem gravação (fluxos por
-  competência, estimativa de variáveis, projeção de saldo, cenários, grande compra,
-  plano anual/mensal) e simulador de juros compostos.
-- **ADR 0012** — investimentos: custo médio e resultados realizados, valor atual
-  ajustado após a avaliação, movimentações com lançamento opcional na conta
-  (compensação), reavaliação sugerida e contrato de indicadores de mercado.
-
-## Próximas etapas
-
-Iniciar a **Fase 8 — Calendário e relatórios** (requisitos em
-[`docs/ROADMAP.md`](./docs/ROADMAP.md)).
 
 ## Histórico — Fase 6
 
