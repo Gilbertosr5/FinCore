@@ -69,12 +69,60 @@ const loadAccountStatementPage = () =>
     Component: m.AccountStatementPage,
   }));
 
+const loadCreditCardsPage = () =>
+  import('@/features/credit-cards/presentation/pages/CreditCardsPage').then((m) => ({
+    Component: m.CreditCardsPage,
+  }));
+
+const loadCreditCardDetailsPage = () =>
+  import('@/features/credit-cards/presentation/pages/CreditCardDetailsPage').then((m) => ({
+    Component: m.CreditCardDetailsPage,
+  }));
+
+const loadBudgetsPage = () =>
+  import('@/features/budgets/presentation/pages/BudgetsPage').then((m) => ({
+    Component: m.BudgetsPage,
+  }));
+
+const loadGoalsPage = () =>
+  import('@/features/goals/presentation/pages/GoalsPage').then((m) => ({
+    Component: m.GoalsPage,
+  }));
+
+const loadGoalDetailsPage = () =>
+  import('@/features/goals/presentation/pages/GoalDetailsPage').then((m) => ({
+    Component: m.GoalDetailsPage,
+  }));
+
+const loadPlanningPage = () =>
+  import('@/features/planning/presentation/pages/PlanningPage').then((m) => ({
+    Component: m.PlanningPage,
+  }));
+
+const loadInvestmentsPage = () =>
+  import('@/features/investments/presentation/pages/InvestmentsPage').then((m) => ({
+    Component: m.InvestmentsPage,
+  }));
+
+const loadAssetDetailsPage = () =>
+  import('@/features/investments/presentation/pages/AssetDetailsPage').then((m) => ({
+    Component: m.AssetDetailsPage,
+  }));
+
 /** Módulos já entregues (rota real); os demais exibem placeholder com a fase prevista. */
 const deliveredModuleRoutes: RouteObject[] = [
   { path: ROUTES.dashboard, lazy: loadDashboardPage },
   { path: ROUTES.transactions, lazy: loadTransactionsPage },
   { path: ROUTES.accounts, lazy: loadAccountsPage },
   { path: `${ROUTES.accounts}/:accountId`, lazy: loadAccountStatementPage },
+  { path: ROUTES.creditCards, lazy: loadCreditCardsPage },
+  { path: `${ROUTES.creditCards}/:cardId`, lazy: loadCreditCardDetailsPage },
+  { path: ROUTES.budgets, lazy: loadBudgetsPage },
+  { path: ROUTES.goals, lazy: loadGoalsPage },
+  { path: `${ROUTES.goals}/:goalId`, lazy: loadGoalDetailsPage },
+  { path: ROUTES.planning, lazy: loadPlanningPage },
+  { path: ROUTES.investments, lazy: loadInvestmentsPage },
+  { path: `${ROUTES.investments}/:assetId`, lazy: loadAssetDetailsPage },
   { path: ROUTES.settings, lazy: loadSettingsPage },
 ];
 

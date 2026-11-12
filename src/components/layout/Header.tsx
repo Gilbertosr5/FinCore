@@ -9,16 +9,17 @@ import { NAVIGATION_ITEMS } from '@/constants/navigation';
 import { useUiStore } from '@/stores/ui.store';
 
 import { CommandSearch } from './CommandSearch';
-import { NotificationsButton } from './NotificationsButton';
 import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
   isDemo: boolean;
   /** Menu do usuário, fornecido pela camada de aplicação (feature de autenticação). */
   userMenu: ReactNode;
+  /** Central de notificações, fornecida pela camada de aplicação (alertas financeiros). */
+  notifications: ReactNode;
 }
 
-export function Header({ isDemo, userMenu }: HeaderProps) {
+export function Header({ isDemo, userMenu, notifications }: HeaderProps) {
   const { pathname } = useLocation();
   const mobileNavOpen = useUiStore((state) => state.mobileNavOpen);
   const setMobileNavOpen = useUiStore((state) => state.setMobileNavOpen);
@@ -59,7 +60,7 @@ export function Header({ isDemo, userMenu }: HeaderProps) {
             <TooltipContent>Dados e autenticação de demonstração — sem backend real</TooltipContent>
           </Tooltip>
         )}
-        <NotificationsButton />
+        {notifications}
         <ThemeToggle />
         {userMenu}
       </div>

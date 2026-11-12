@@ -1,7 +1,7 @@
 import { asIsoDate } from '@/lib/dates';
 import { Money } from '@/lib/money';
 
-import { computeGoalProgress } from './goal-progress';
+import { computeGoalProgress, projectGoal } from './goal-progress';
 import type { Goal, GoalContribution } from '../entities/goal';
 
 const d = asIsoDate;
@@ -30,6 +30,7 @@ const contribution = (
   date: d(date),
   amount: Money.of(amount),
   type,
+  transferId: null,
 });
 
 describe('progresso de metas', () => {
@@ -81,5 +82,37 @@ describe('progresso de metas', () => {
     const progress = computeGoalProgress({ ...goal, targetDate: null }, [], d('2026-03-01'));
     expect(progress.monthlyRequired).toBeNull();
     expect(progress.monthsLeft).toBeNull();
+  });
+});
+
+describe('projeção de metas (estimativa)', () => {
+  const today = d('2026-06-15');
+
+  it('sem aportes recentes não estima data', () => {
+    const contributions = [contribution('3000', '2026-01-10')];
+    const progress = computeGoalProgress(goal, contributions, today);
+    const projection = projectGoal(progress, contributions, today, 3);
+    expect(projection.averageMonthly.isZero()).toBe(true);
+    expect(projection.projectedDate).toBeNull();
+    expect(projection.onTrack).toBeNull();
+  });
+
+  it('meta atingida não tem projeção; retiradas reduzem o ritmo', () => {
+    const reached = [contribution('12000', '2026-06-01')];
+    const progressReached = computeGoalProgress(goal, reached, today);
+    expect(projectGoal(progressReached, reached, today).projectedDate).toBeNull();
+
+    const mixed = [
+      contribution('1000', '2026-04-10'),
+      contribution('1000', '2026-05-10'),
+      contribution('400', '2026-06-10', 'withdrawal'),
+    ];
+    const progress = computeGoalProgress(goal, mixed, today);
+    const projection = projectGoal(progress, mixed, today, 3);
+    // (2000 − 400) / 3 meses.
+    expect(projection.averageMonthly.toString()).toBe('533.33');
+    // Faltam 10.400 → 20 meses → fev/2028, depois do prazo (dez/2026).
+    expect(projection.projectedDate).toBe('2028-02-29');
+    expect(projection.onTrack).toBe(false);
   });
 });

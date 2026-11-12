@@ -2,7 +2,16 @@
  * Histórico de alterações importantes (auditoria funcional, não técnica).
  * Registra o que mudou, quando e um resumo legível — nunca dados sensíveis.
  */
-export type AuditEntityType = 'transaction' | 'recurrence' | 'account' | 'category';
+export type AuditEntityType =
+  | 'transaction'
+  | 'recurrence'
+  | 'account'
+  | 'category'
+  | 'credit_card'
+  | 'card_purchase'
+  | 'budget'
+  | 'goal'
+  | 'asset';
 
 export type AuditAction =
   'created' | 'updated' | 'deleted' | 'cancelled' | 'paid' | 'unpaid' | 'archived' | 'restored';

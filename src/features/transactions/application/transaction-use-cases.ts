@@ -5,6 +5,7 @@ import {
   type CategoryUsageChecker,
 } from './category-commands';
 import { CreateEntryUseCase, UpdateEntryUseCase } from './entry-commands';
+import { InvestmentLedgerCommands } from './investment-ledger';
 import type { LedgerContext } from './ledger-context';
 import { ListTransactionsUseCase } from './list-transactions';
 import { RecurrenceScheduler } from './recurrence-scheduler';
@@ -30,6 +31,7 @@ export interface TransactionUseCases {
   createCategory: CreateCategoryUseCase;
   updateCategory: UpdateCategoryUseCase;
   deleteCategory: DeleteCategoryUseCase;
+  investments: InvestmentLedgerCommands;
 }
 
 export function createTransactionUseCases(
@@ -51,5 +53,6 @@ export function createTransactionUseCases(
     createCategory: new CreateCategoryUseCase(context),
     updateCategory: new UpdateCategoryUseCase(context, categoryUsageCheckers),
     deleteCategory: new DeleteCategoryUseCase(context, categoryUsageCheckers),
+    investments: new InvestmentLedgerCommands(context),
   };
 }

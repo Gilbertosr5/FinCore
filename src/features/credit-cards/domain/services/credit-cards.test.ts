@@ -5,8 +5,14 @@ import {
   getInvoiceDates,
   getInvoiceMonthForPurchase,
 } from './invoice-schedule';
-import { buildInvoices, computeCardDebt, computeLimitUsage } from './invoices';
-import { card, cardPayment, d, purchase } from '../../../../../tests/helpers/finance-fixtures';
+import {
+  buildInvoiceForMonth,
+  buildInvoices,
+  computeCardDebt,
+  computeLimitUsage,
+  getOpenInvoiceMonth,
+} from './invoices';
+import { card, cardPayment, d, m, purchase } from '../../../../../tests/helpers/finance-fixtures';
 
 describe('calendário de faturas', () => {
   it('vence no mesmo mês quando o vencimento é depois do fechamento', () => {
@@ -139,5 +145,60 @@ describe('faturas', () => {
     const payment = cardPayment(visa, '2026-02', '300', '2026-02-09');
     expect(payment.kind).toBe('card_payment');
     expect(payment.accountId).toBe(visa.paymentAccountId);
+  });
+});
+
+describe('fatura aberta (Fase 5)', () => {
+  const visa = card({ closingDay: 3, dueDay: 10 });
+
+  it('é a fatura em que uma compra feita hoje entraria', () => {
+    expect(getOpenInvoiceMonth(visa, d('2026-03-02'))).toBe('2026-03');
+    expect(getOpenInvoiceMonth(visa, d('2026-03-03'))).toBe('2026-04');
+  });
+
+  it('mês aberto sem compras não faz a fatura seguinte parecer aberta', () => {
+    // Só há parcela em maio; hoje (10/03) a fatura aberta é a de abril, vazia.
+    const purchases = [
+      purchase({
+        cardId: visa.id,
+        totalAmount: '200',
+        purchaseDate: '2026-03-08',
+        installmentCount: 2,
+      }),
+    ];
+    const today = d('2026-03-10');
+    const invoices = buildInvoices(visa, purchases, [], today);
+    expect(invoices.map((invoice) => [invoice.month, invoice.status])).toEqual([
+      ['2026-04', 'open'],
+      ['2026-05', 'future'],
+    ]);
+    const empty = buildInvoiceForMonth(
+      card({ id: 'other', closingDay: 3, dueDay: 10 }),
+      purchases,
+      [],
+      m('2026-04'),
+      today,
+    );
+    expect(empty).toMatchObject({ status: 'open', installments: [] });
+    expect(empty.total.isZero()).toBe(true);
+  });
+
+  it('fatura fechada sem valor é considerada paga (nada a pagar)', () => {
+    const invoice = buildInvoiceForMonth(visa, [], [], m('2026-02'), d('2026-03-10'));
+    expect(invoice.status).toBe('paid');
+    expect(invoice.outstanding.isZero()).toBe(true);
+  });
+
+  it('pagamento estornado (cancelado) não abate a fatura', () => {
+    const purchases = [
+      purchase({ cardId: visa.id, totalAmount: '100', purchaseDate: '2026-02-10' }),
+    ];
+    const payment = {
+      ...cardPayment(visa, '2026-03', '100', '2026-03-09'),
+      status: 'cancelled' as const,
+    };
+    const invoice = buildInvoiceForMonth(visa, purchases, [payment], m('2026-03'), d('2026-03-10'));
+    expect(invoice.paid.isZero()).toBe(true);
+    expect(invoice.status).toBe('closed');
   });
 });

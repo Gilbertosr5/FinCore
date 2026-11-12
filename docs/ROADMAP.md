@@ -6,10 +6,10 @@
 > [`PROJECT_STATUS.md`](../PROJECT_STATUS.md); decisões em [`docs/adr/`](./adr/).
 >
 > **Para retomar:** leia este arquivo + `PROJECT_STATUS.md` e peça
-> "Iniciar Fase 4". Ao fim de cada fase: `npm run check`, `npm run build`,
+> "Iniciar a próxima fase pendente". Ao fim de cada fase: `npm run check`, `npm run build`,
 > `npm run test:e2e`, verificação no navegador e atualização do `PROJECT_STATUS.md`.
 
-## Estado atual (11/11/2026)
+## Estado atual (11/11/2026 — após a Fase 7)
 
 | Fase | Descrição               | Status     |
 | ---- | ----------------------- | ---------- |
@@ -17,18 +17,18 @@
 | 2    | Autenticação e layout   | ✅         |
 | 3    | Dashboard               | ✅         |
 | 4    | Gestão financeira       | ✅         |
-| 5    | Cartões e orçamentos    | ⏳ próxima |
-| 6    | Metas e planejamento    | —          |
-| 7    | Investimentos           | —          |
-| 8    | Calendário e relatórios | —          |
+| 5    | Cartões e orçamentos    | ✅         |
+| 6    | Metas e planejamento    | ✅         |
+| 7    | Investimentos           | ✅         |
+| 8    | Calendário e relatórios | ⏳ próxima |
 | 9    | Finalização e qualidade | —          |
 
 Já existem (e devem ser reutilizados, não reescritos): domínio e regras de
 contabilização de contas, transações, cartões/faturas, orçamentos, metas e
 investimentos (ADR 0007); repositórios `Demo*` (IndexedDB) e `Api*` (REST) por
 feature (ADR 0008) — com **escrita** já implementada para lançamentos, recorrências,
-contas e categorias (Fase 4, ADR 0009) e somente leitura para cartões, orçamentos,
-metas e investimentos; histórico de alterações (feature `history`); seed de
+contas e categorias (Fase 4, ADR 0009) e cartões, compras, pagamentos de fatura e
+orçamentos (Fase 5, ADR 0010), metas e aportes (Fase 6, ADR 0011), investimentos com custo médio (Fase 7, ADR 0012); planejamento e projeções (feature `planning`); histórico de alterações (feature `history`); seed de
 demonstração; `Money`, `IsoDate`, `MonthKey`; componentes de UI (select, checkbox,
 tabela, diálogos de confirmação, paginação, campo monetário), gráficos e formulários.
 
@@ -89,6 +89,9 @@ movimentações válidas, sem duplicidade.
 
 ## FASE 5 — Cartões e orçamentos
 
+> ✅ **Concluída em 11/11/2026** — ver [`PROJECT_STATUS.md`](../PROJECT_STATUS.md) e
+> [ADR 0010](./adr/0010-cartoes-orcamentos-e-notificacoes.md).
+
 **Implementar:** cartões, faturas, compras, parcelamentos, pagamentos,
 orçamentos, limites, alertas.
 **Critério de conclusão:** consistência entre compras, faturas, contas e indicadores.
@@ -122,6 +125,9 @@ Também: alimentar a central de notificações do cabeçalho com os alertas.
 
 ## FASE 6 — Metas e planejamento
 
+> ✅ **Concluída em 11/11/2026** — ver [`PROJECT_STATUS.md`](../PROJECT_STATUS.md) e
+> [ADR 0011](./adr/0011-metas-e-planejamento.md).
+
 **Implementar:** metas, aportes, planejamento mensal, planejamento anual,
 simulações, projeções.
 **Critério de conclusão:** metas e projeções atualizadas corretamente.
@@ -147,6 +153,9 @@ impacto. **Projeções sempre identificadas como estimativas.**
 ---
 
 ## FASE 7 — Investimentos
+
+> ✅ **Concluída em 11/11/2026** — ver [`PROJECT_STATUS.md`](../PROJECT_STATUS.md) e
+> [ADR 0012](./adr/0012-investimentos-custo-medio-e-indicadores.md).
 
 **Implementar:** ativos, classes, aportes, resgates, proventos, rentabilidade,
 distribuição patrimonial, preparação para integrações externas.

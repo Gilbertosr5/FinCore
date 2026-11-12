@@ -1,6 +1,6 @@
 # FinCore — Status do Projeto
 
-_Última atualização: 11/11/2026 — Fase 4 concluída._
+_Última atualização: 11/11/2026 — Fase 7 concluída._
 
 > Para retomar em um novo chat, leia [`CONTINUAR.md`](./CONTINUAR.md). Pendências consolidadas: [`PENDENCIAS.md`](./PENDENCIAS.md).
 
@@ -12,13 +12,231 @@ _Última atualização: 11/11/2026 — Fase 4 concluída._
 | 2    | Autenticação e layout   | ✅ Concluída |
 | 3    | Dashboard               | ✅ Concluída |
 | 4    | Gestão financeira       | ✅ Concluída |
-| 5    | Cartões e orçamentos    | ⏳ Próxima   |
-| 6    | Metas e planejamento    | —            |
-| 7    | Investimentos           | —            |
-| 8    | Calendário e relatórios | —            |
+| 5    | Cartões e orçamentos    | ✅ Concluída |
+| 6    | Metas e planejamento    | ✅ Concluída |
+| 7    | Investimentos           | ✅ Concluída |
+| 8    | Calendário e relatórios | ⏳ Próxima   |
 | 9    | Finalização e qualidade | —            |
 
-## Fase 4 — Implementado
+## Fase 7 — Implementado
+
+Regras em [ADR 0012](./docs/adr/0012-investimentos-custo-medio-e-indicadores.md).
+
+**Carteira (`/investimentos`)**
+
+- Resumo: valor atual (com aviso "Inclui estimativas"), custo das posições, retorno
+  total (não realizado + realizado + proventos) e proventos dos últimos 12 meses.
+- Evolução da carteira (valor × aplicado), posições com quantidade, **preço médio**,
+  custo, valor atual com **origem** (manual, estimativa, pelo custo, ajustado),
+  resultado e participação; distribuição por classe; proventos mês a mês.
+- **Indicadores de mercado** (CDI, IPCA, Selic, Ibovespa): contrato pronto, exibidos
+  como "integração ainda não disponível" — nada é inventado; aviso de que nada é
+  recomendação de investimento.
+
+**Ativo (`/investimentos/:id`)**
+
+- Cadastrar/editar/excluir ativo (nome, código, classe, instituição, observações).
+- **Movimentações**: compra/venda (com quantidade) ou aporte/resgate, dividendos,
+  juros, rendimentos, taxas e impostos; opção de lançar na conta (aplicação/resgate
+  como `investment`, proventos como receita); exclusão remove o lançamento.
+- **Avaliações** (valor atual manual ou estimado, uma por data) e **reavaliação
+  sugerida** quando a operação é anterior à última avaliação.
+- Quantidade, preço médio, custo, resultado realizado e não realizado, proventos,
+  retorno total, evolução da posição e histórico de alterações.
+
+**Infraestrutura**: `InvestmentRepository` com escrita (Demo + Api),
+`MarketIndicatorRepository` (Demo indisponível; Api `GET /market/indicators`),
+`transactionId` nas movimentações, `InvestmentLedgerCommands` na feature de
+transações, domínio com custo médio (`replayMovements`, `findOversell`) e análises
+(`buildEvolution`, `buildIncomeByMonth`), histórico com `asset`.
+
+**Correções durante a fase**: o valor atual ficava "parado" na última avaliação e
+ignorava aplicações posteriores — agora são somadas pelo custo e sinalizadas.
+
+## Testes executados (Fase 7)
+
+| Verificação                     | Resultado                                                                                     |
+| ------------------------------- | --------------------------------------------------------------------------------------------- |
+| `npm run typecheck`             | ✅ sem erros                                                                                  |
+| `npm run lint`                  | ✅ 0 erros, 0 avisos                                                                          |
+| `npm run format:check`          | ✅                                                                                            |
+| `npm test`                      | ✅ 41 arquivos, 478 testes                                                                    |
+| `npm run test:e2e`              | ✅ 35 aprovados, 1 ignorado de propósito (atalho de teclado no mobile)                        |
+| `npm run build`                 | ✅ sem aviso de chunk acima de 500 kB                                                         |
+| Verificação manual no navegador | ✅ carteira, compra com conta, reavaliação sugerida — celular e desktop, temas escuro e claro |
+
+Novas suítes: `investment-use-cases`, `market-indicators` (REST), casos novos em
+`portfolio` (custo médio, realizado, renda fixa, ordem no dia),
+`tests/integration/investments`, `tests/e2e/investments.spec`.
+
+## Funcionalidades pendentes
+
+- **Fase 8 — Calendário e relatórios** (requisitos em [`docs/ROADMAP.md`](./docs/ROADMAP.md)).
+- Anexos em lançamentos (depende de armazenamento de arquivos no backend).
+- Configurações: moeda, formato de data, fuso, notificações, exportação/exclusão.
+- Detalhes em [`PENDENCIAS.md`](./PENDENCIAS.md).
+
+## Problemas conhecidos
+
+- Nenhum problema crítico.
+- O seed é relativo à data em que foi gerado; as recorrências avançam sozinhas,
+  mas gastos variáveis só existem até a data de geração — use Configurações →
+  Restaurar dados para um cenário atualizado.
+- Bundle inicial: chunk `App` ~413 kB (127 kB gzip) + `index` ~255 kB (81 kB gzip) —
+  avaliar carregar o seed e o dashboard sob demanda na Fase 9.
+- `npm audit`: vulnerabilidades moderadas apenas em dependências de
+  desenvolvimento (plugins de ESLint); produção: 0.
+- Investimentos: retorno simples (não TWR/MWR), sem IR/come-cotas nem eventos
+  corporativos; valores dependem de avaliações manuais até haver cotações (ADR 0012).
+- Projeções do planejamento são simplificadas (sem sazonalidade, inflação ou data
+  exata de pagamento das faturas — ADR 0011) e sempre rotuladas como estimativa.
+- Histórico de orçamentos compara períodos passados com o limite **atual**; alterar
+  os dias de fechamento de um cartão recalcula todas as faturas (ADR 0010).
+
+## Decisões arquiteturais
+
+- ADR 0001–0008 (Fases 1–3).
+- **ADR 0009** — ids no cliente (gravações idempotentes), lote atômico do livro de
+  lançamentos, transferências, parcelas, recorrências materializadas, situações,
+  contas, categorias e histórico de alterações.
+- **ADR 0010** — faturas derivadas e fatura aberta pelo calendário, compra como
+  registro único, limite disponível, pagamento como `card_payment` (parcial,
+  antecipado, estorno), orçamentos (unicidade, consumo compartilhado, histórico) e
+  central de notificações.
+- **ADR 0011** — metas (progresso derivado, aporte com transferência opcional e
+  compensação, projeção pelo ritmo), planejamento sem gravação (fluxos por
+  competência, estimativa de variáveis, projeção de saldo, cenários, grande compra,
+  plano anual/mensal) e simulador de juros compostos.
+- **ADR 0012** — investimentos: custo médio e resultados realizados, valor atual
+  ajustado após a avaliação, movimentações com lançamento opcional na conta
+  (compensação), reavaliação sugerida e contrato de indicadores de mercado.
+
+## Próximas etapas
+
+Iniciar a **Fase 8 — Calendário e relatórios** (requisitos em
+[`docs/ROADMAP.md`](./docs/ROADMAP.md)).
+
+## Histórico — Fase 6
+
+### Fase 6 — Implementado
+
+Regras em [ADR 0011](./docs/adr/0011-metas-e-planejamento.md).
+
+**Metas (`/metas`, `/metas/:id`)**
+
+- Resumo: acumulado, falta acumular e soma dos aportes mensais necessários.
+- Criar/editar (nome, tipo, valor desejado, datas, prioridade, conta da meta,
+  descrição), concluir, cancelar, reativar e excluir (só sem aportes).
+- **Aportes e retiradas** com opção de registrar também a **transferência** entre
+  contas (nunca receita); exclusão do aporte remove a transferência vinculada.
+- Progresso, valor restante, aporte mensal necessário, prazo vencido, **ritmo atual**
+  e **conclusão estimada** (rotulados como estimativa); histórico de aportes e de
+  alterações.
+
+**Planejamento (`/planejamento`)** — nada é gravado; tudo rotulado como estimativa.
+
+- **Projeção de saldo** (6, 12 ou 24 meses): ponto de partida (contas − faturas
+  devidas), receitas/despesas agendadas, recorrências futuras, parcelas do cartão e
+  média dos variáveis; gráfico, tabela, menor saldo previsto.
+- **Cenários** base, otimista, conservador e personalizado (variação de receitas e
+  de gastos variáveis), com comparação entre cenários.
+- **Grande compra simulada** (valor, mês, parcelas) com aviso se o saldo projetado
+  ficar negativo.
+- **Plano anual e mensal**: 12 meses com realizado, em andamento e previsto, total do
+  ano, orçado; detalhamento do mês por categoria com orçamento.
+- **Simulação de economia e aportes**: juros compostos, total aportado, rendimentos,
+  aporte necessário para um objetivo e tempo até atingi-lo.
+
+**Infraestrutura**: `GoalRepository` com escrita (Demo + Api), `transferId` nos
+aportes, `GoalTransferPort` ligado aos casos de uso de lançamentos, feature
+`planning` (domínio puro: `collectFlows`, `buildBalanceProjection`,
+`buildAnnualPlan`/`buildMonthPlan`, `simulateSavings`), `TableFooter` no design
+system, `TrendChart` movido para `components/data-display`, histórico com `goal`.
+
+**Correções durante a fase**: reexportar o `TrendChart` pelo índice do dashboard
+levava o Recharts ao carregamento inicial (chunk de 675 kB) — movido para
+`components/data-display` (381 kB).
+
+### Testes executados (Fase 6)
+
+| Verificação                     | Resultado                                                                                                          |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `npm run typecheck`             | ✅ sem erros                                                                                                       |
+| `npm run lint`                  | ✅ 0 erros, 0 avisos                                                                                               |
+| `npm run format:check`          | ✅                                                                                                                 |
+| `npm test`                      | ✅ 38 arquivos, 443 testes                                                                                         |
+| `npm run test:e2e`              | ✅ 33 aprovados, 1 ignorado de propósito (atalho de teclado no mobile)                                             |
+| `npm run build`                 | ✅ sem aviso de chunk acima de 500 kB                                                                              |
+| Verificação manual no navegador | ✅ metas, aporte com transferência, planejamento (cenários, plano anual) — celular e desktop, temas escuro e claro |
+
+Novas suítes: `goal-use-cases`, casos novos em `goal-progress` (projeção),
+`planning` (projeção, cenários, compra, plano anual/mensal, simulador),
+`tests/integration/goals-planning`, `tests/e2e/goals-planning.spec`.
+
+## Histórico — Fase 5
+
+### Fase 5 — Implementado
+
+Regras em [ADR 0010](./docs/adr/0010-cartoes-orcamentos-e-notificacoes.md) (base: ADR 0007).
+
+**Cartões (`/cartoes`, `/cartoes/:id`)**
+
+- Resumo: limite disponível, utilizado (inclui parcelas futuras) e faturas a pagar.
+- Cartões com barra de limite, fatura aberta, próxima fatura a pagar e parcelas futuras.
+- Cadastrar/editar (nome, instituição, bandeira, limite, fechamento, vencimento,
+  conta de pagamento), bloquear/desbloquear, cancelar/reativar, excluir (só sem uso).
+- **Compras** avulsas e parceladas (1–48x) com prévia "Nx de R$ … a partir da fatura
+  de …"; editar e cancelar (estorno integral). Recusa: cartão inativo, data futura,
+  categoria que não é de despesa e **limite insuficiente**.
+- **Faturas** por mês (aberta, fechada, parcialmente paga, paga, vencida, futura)
+  com dados de fechamento/vencimento, total, pago, em aberto e parcelas.
+- **Pagar fatura** (total, parcial ou antecipado; conta escolhida) → transação
+  `card_payment` que reduz o saldo da conta e nunca é despesa; **estornar** pagamento.
+- Histórico de pagamentos, parcelas futuras por mês e histórico de alterações.
+
+**Orçamentos (`/orcamentos`)**
+
+- Mensal ou anual, por categoria de despesa ou geral, limiar de alerta (padrão 80%).
+- Navegação por mês (`?mes=`), indicadores (planejado × realizado dos mensais por
+  categoria, dentro do limite, em alerta, excedidos), barra de consumo, disponível
+  ou **excedente**; pausar/reativar, editar, excluir; um único orçamento ativo por
+  categoria e período.
+- **Histórico**: planejado × realizado dos últimos 12 meses (ou 5 anos) e alterações.
+
+**Central de notificações** do cabeçalho alimentada pelos alertas do dashboard do
+mês atual (saldo negativo, contas vencidas/a vencer, faturas, orçamentos, limite do
+cartão, resultado negativo), com contador de alertas importantes e link para o módulo.
+
+**Infraestrutura**: `CreditCardRepository` (`save`, `remove`, `findById`,
+`savePurchase`, `findPurchaseById`) e `BudgetRepository` (`save`, `remove`,
+`findById`) — Demo e Api; casos de uso em `features/credit-cards/application` e
+`features/budgets/application`; contextos e hooks; `sumBudgetSpending` compartilhado
+com o dashboard; histórico com `credit_card`, `card_purchase` e `budget`;
+contrato REST da Fase 5 em `docs/api-contract.md`.
+
+**Correções durante a fase**: a fatura aberta podia ser marcada no mês errado quando
+o mês corrente não tinha compras; fatura fechada sem valor aparecia como "fechada"
+(agora "paga"); após pagar, a tela de detalhes pulava para outra fatura.
+
+### Testes executados (Fase 5)
+
+| Verificação                     | Resultado                                                                                                              |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `npm run typecheck`             | ✅ sem erros                                                                                                           |
+| `npm run lint`                  | ✅ 0 erros, 0 avisos                                                                                                   |
+| `npm run format:check`          | ✅                                                                                                                     |
+| `npm test`                      | ✅ 35 arquivos, 403 testes                                                                                             |
+| `npm run test:e2e`              | ✅ 29 aprovados, 1 ignorado de propósito (atalho de teclado no mobile)                                                 |
+| `npm run build`                 | ✅                                                                                                                     |
+| Verificação manual no navegador | ✅ cartões, detalhes, pagamento parcial, orçamentos, histórico, notificações — celular e desktop, temas escuro e claro |
+
+Novas suítes: `credit-card-use-cases`, `budget-use-cases`, `NotificationsButton`,
+casos novos em `credit-cards` (fatura aberta), `tests/integration/cards-budgets`,
+`tests/e2e/cards-budgets.spec`.
+
+## Histórico — Fase 4
+
+### Fase 4 — Implementado
 
 Regras em [ADR 0009](./docs/adr/0009-escrita-recorrencias-e-historico.md).
 
@@ -66,7 +284,7 @@ implementações Demo e Api; feature `history`; invalidação de cache centraliz
 (acessibilidade); seed gerava despesas variáveis futuras como pendentes;
 capitalização "Novembro De 2026".
 
-## Testes executados (Fase 4)
+### Testes executados (Fase 4)
 
 | Verificação                     | Resultado                                                              |
 | ------------------------------- | ---------------------------------------------------------------------- |
@@ -80,38 +298,6 @@ capitalização "Novembro De 2026".
 
 Novas suítes: `ledger-commands`, `queries-and-categories`, `account-use-cases`,
 `demo-data-store` (escrita atômica), `tests/integration/ledger`, `tests/e2e/ledger.spec`.
-
-## Funcionalidades pendentes
-
-- **Fase 5 — Cartões e orçamentos:** CRUD de cartões, compras (avulsas e
-  parceladas), faturas (tela), pagamento de fatura (gera `card_payment`),
-  histórico de pagamentos, orçamentos (CRUD, mensal/anual, planejado × realizado,
-  histórico) e alimentar a central de notificações com os alertas.
-- Anexos em lançamentos (depende de armazenamento de arquivos no backend).
-- Configurações: moeda, formato de data, fuso, notificações, exportação/exclusão.
-
-## Problemas conhecidos
-
-- Nenhum problema crítico.
-- O seed é relativo à data em que foi gerado; as recorrências avançam sozinhas,
-  mas gastos variáveis só existem até a data de geração — use Configurações →
-  Restaurar dados para um cenário atualizado.
-- Bundle inicial ~150 kB gzip; avaliar carregar o seed sob demanda na Fase 9.
-- `npm audit`: vulnerabilidades moderadas apenas em dependências de
-  desenvolvimento (plugins de ESLint); produção: 0.
-- Investimentos em versão inicial (ver ADR 0007).
-
-## Decisões arquiteturais
-
-- ADR 0001–0008 (Fases 1–3).
-- **ADR 0009** — ids no cliente (gravações idempotentes), lote atômico do livro de
-  lançamentos, transferências, parcelas, recorrências materializadas, situações,
-  contas, categorias e histórico de alterações.
-
-## Próximas etapas
-
-Iniciar a **Fase 5 — Cartões e orçamentos** (requisitos em
-[`docs/ROADMAP.md`](./docs/ROADMAP.md)).
 
 ## Histórico — Fase 3
 

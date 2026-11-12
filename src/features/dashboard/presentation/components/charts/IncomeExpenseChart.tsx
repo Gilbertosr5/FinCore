@@ -1,6 +1,12 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 import {
+  axisCurrency,
+  displayMoney,
+  monthLabel,
+  monthTitle,
+} from '@/components/data-display/chart-format';
+import {
   CHART_AXIS_TICK,
   CHART_GRID_STROKE,
   CHART_HEIGHT,
@@ -11,7 +17,6 @@ import { ChartLegend } from '@/components/data-display/ChartLegend';
 import { ChartTooltipContent } from '@/components/data-display/ChartTooltip';
 import { formatMoney } from '@/lib/money';
 
-import { axisCurrency, displayMoney, monthLabel, monthTitle } from './chart-format';
 import type { MonthlyPoint } from '../../../domain/overview-types';
 
 const INCOME_COLOR = seriesColor(0);

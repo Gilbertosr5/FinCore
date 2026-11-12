@@ -15,14 +15,14 @@ import {
   CHART_HEIGHT,
   seriesColor,
 } from '@/components/data-display/chart-theme';
-import { ChartCard, type ChartTable } from '@/components/data-display/ChartCard';
-import { ChartLegend } from '@/components/data-display/ChartLegend';
-import { ChartTooltipContent } from '@/components/data-display/ChartTooltip';
 import type { MonthKey } from '@/lib/dates';
 import type { Money } from '@/lib/money';
 import { formatMoney } from '@/lib/money';
 
 import { axisCurrency, displayMoney, monthLabel, monthTitle } from './chart-format';
+import { ChartCard, type ChartTable } from './ChartCard';
+import { ChartLegend } from './ChartLegend';
+import { ChartTooltipContent } from './ChartTooltip';
 
 export interface TrendPoint {
   month: MonthKey;

@@ -61,6 +61,10 @@ export {
 export type { LedgerContext } from './application/ledger-context';
 export type { ChangeScope, EntryInput, Repetition } from './application/entry-commands';
 export type { TransferInput } from './application/transfer-commands';
+export {
+  InvestmentLedgerCommands,
+  type InvestmentLedgerInput,
+} from './application/investment-ledger';
 export type {
   TransactionFilters,
   TransactionPage,

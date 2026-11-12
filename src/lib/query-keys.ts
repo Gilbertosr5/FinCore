@@ -11,6 +11,11 @@ export const QUERY_ROOTS = {
   categories: 'categories',
   dashboard: 'dashboard',
   history: 'history',
+  creditCards: 'credit-cards',
+  budgets: 'budgets',
+  goals: 'goals',
+  investments: 'investments',
+  planning: 'planning',
 } as const;
 
 export async function invalidateFinancialData(queryClient: QueryClient): Promise<void> {

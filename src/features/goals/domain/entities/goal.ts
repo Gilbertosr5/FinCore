@@ -47,4 +47,21 @@ export interface GoalContribution {
   date: IsoDate;
   amount: Money;
   type: 'deposit' | 'withdrawal';
+  /**
+   * Transferência entre contas registrada junto com o aporte/retirada (ADR 0011).
+   * null = só a destinação foi registrada (o dinheiro já estava na conta).
+   */
+  transferId: string | null;
 }
+
+export const GOAL_PRIORITY_LABELS: Record<GoalPriority, string> = {
+  low: 'Baixa',
+  medium: 'Média',
+  high: 'Alta',
+};
+
+export const GOAL_STATUS_LABELS: Record<GoalStatus, string> = {
+  active: 'Em andamento',
+  completed: 'Concluída',
+  cancelled: 'Cancelada',
+};

@@ -13,7 +13,17 @@ export const AUDIT_ENDPOINTS = { list: '/audit-log' } as const;
 export const auditEntryRecordSchema = z
   .object({
     id: idField,
-    entityType: z.enum(['transaction', 'recurrence', 'account', 'category']),
+    entityType: z.enum([
+      'transaction',
+      'recurrence',
+      'account',
+      'category',
+      'credit_card',
+      'card_purchase',
+      'budget',
+      'goal',
+      'asset',
+    ]),
     entityId: idField,
     action: z.enum([
       'created',

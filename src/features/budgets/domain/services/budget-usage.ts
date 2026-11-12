@@ -57,3 +57,35 @@ export function computeBudgetUsage(budget: Budget, spent: Money): BudgetUsage {
     status,
   };
 }
+
+/**
+ * Lançamento de consumo usado para medir orçamentos (estrutura compatível com
+ * `FinancialEntry` do dashboard: despesas de conta e parcelas de cartão por
+ * competência; transferências, pagamentos de fatura e cancelados nunca entram).
+ */
+export interface BudgetSpendingEntry {
+  type: 'income' | 'expense';
+  amount: Money;
+  date: IsoDate;
+  categoryId: string | null;
+}
+
+/** Gasto do orçamento no período: despesas da categoria (ou todas, se geral). */
+export function sumBudgetSpending(
+  budget: Pick<Budget, 'categoryId' | 'amount'>,
+  entries: readonly BudgetSpendingEntry[],
+  period: { start: IsoDate; end: IsoDate },
+): Money {
+  return Money.sum(
+    entries
+      .filter(
+        (entry) =>
+          entry.type === 'expense' &&
+          entry.date >= period.start &&
+          entry.date <= period.end &&
+          (budget.categoryId === null || entry.categoryId === budget.categoryId),
+      )
+      .map((entry) => entry.amount),
+    budget.amount.currency,
+  );
+}

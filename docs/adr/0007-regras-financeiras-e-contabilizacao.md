@@ -66,6 +66,9 @@ necessário = restante ÷ meses até a data-alvo (estimativa linear, sem rendime
 
 ### 6. Investimentos — versão inicial e limitações
 
+> **Substituída na Fase 7** por [ADR 0012](./0012-investimentos-custo-medio-e-indicadores.md)
+> (custo médio, resultados realizados e valor atual ajustado). Mantida como histórico.
+
 - **Valor aplicado líquido** = aportes + compras + taxas − vendas − resgates
   (fluxo de capital). **Não é custo médio contábil**; custo médio, preço médio e
   apuração de IR entram na Fase 7.

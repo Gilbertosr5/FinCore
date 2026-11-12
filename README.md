@@ -23,9 +23,9 @@ sem reestruturação.
 | 2    | Autenticação (adaptadores dev/REST), rotas protegidas, layout completo       | ✅ Concluída |
 | 3    | Dashboard com indicadores e gráficos                                         | ✅ Concluída |
 | 4    | Receitas, despesas, contas, transferências, recorrências, parcelamentos      | ✅ Concluída |
-| 5    | Cartões, faturas, orçamentos e alertas                                       | ⏳           |
-| 6    | Metas e planejamento financeiro                                              | ⏳           |
-| 7    | Investimentos                                                                | ⏳           |
+| 5    | Cartões, faturas, orçamentos e alertas                                       | ✅ Concluída |
+| 6    | Metas e planejamento financeiro                                              | ✅ Concluída |
+| 7    | Investimentos                                                                | ✅ Concluída |
 | 8    | Calendário e relatórios (PDF/CSV)                                            | ⏳           |
 | 9    | Qualidade final: acessibilidade, performance, segurança                      | ⏳           |
 
@@ -218,6 +218,48 @@ Em produção, `VITE_AUTH_ADAPTER=dev` é bloqueado (exceto com `VITE_DEMO_MODE=
 - **Categorias** personalizadas em Configurações.
 - Regras: [ADR 0009](./docs/adr/0009-escrita-recorrencias-e-historico.md).
 
+## Cartões e orçamentos
+
+- **Cartões** (`/cartoes`): limite disponível/utilizado, fatura aberta, faturas a
+  pagar e parcelas futuras; cadastrar, editar, bloquear, cancelar e excluir (sem uso).
+  **Compras** avulsas ou parceladas (com prévia das parcelas e recusa por limite
+  insuficiente), edição e cancelamento.
+- **Detalhes** (`/cartoes/:id`): faturas mês a mês (aberta, fechada, parcialmente
+  paga, paga, vencida, futura) com suas parcelas; **pagar fatura** (total, parcial ou
+  antecipado — gera um pagamento `card_payment` que reduz o saldo da conta e nunca é
+  despesa) e estornar; histórico de pagamentos e de alterações.
+- **Orçamentos** (`/orcamentos`): mensais ou anuais, por categoria ou gerais, com
+  limiar de alerta; consumo do mês, disponível ou excedente, planejado × realizado,
+  pausar/reativar e histórico dos últimos 12 meses.
+- **Central de notificações** no cabeçalho com os alertas do mês (faturas, orçamentos,
+  limite, contas vencidas, saldo negativo), cada um levando ao módulo correspondente.
+- Regras: [ADR 0010](./docs/adr/0010-cartoes-orcamentos-e-notificacoes.md).
+
+## Metas e planejamento
+
+- **Metas** (`/metas`, `/metas/:id`): reserva de emergência, viagem, imóvel etc.,
+  com valor desejado, prazo, prioridade e conta da meta. Aportes e retiradas (com
+  transferência opcional entre contas — nunca receita), progresso, valor restante,
+  aporte mensal necessário, ritmo atual e conclusão estimada; concluir, cancelar e
+  reativar.
+- **Planejamento** (`/planejamento`): projeção de saldo de 6 a 24 meses com cenários
+  (base, otimista, conservador, personalizado), simulação de grande compra, plano
+  anual e mensal por categoria (realizado × previsto × orçado) e simulador de
+  economia com juros compostos. **Tudo identificado como estimativa.**
+- Regras: [ADR 0011](./docs/adr/0011-metas-e-planejamento.md).
+
+## Investimentos
+
+- **Carteira** (`/investimentos`): valor atual com a origem de cada valor (manual,
+  estimativa, pelo custo), custo, retorno total (não realizado + realizado +
+  proventos), evolução, posições com preço médio, distribuição por classe e
+  proventos mês a mês. Indicadores de mercado preparados como contrato (sem dados
+  inventados); nenhuma recomendação de investimento.
+- **Ativo** (`/investimentos/:id`): compras/vendas com quantidade ou aportes/resgates,
+  proventos, taxas e impostos — com lançamento opcional na conta —, avaliações do valor
+  atual e reavaliação sugerida.
+- Regras: [ADR 0012](./docs/adr/0012-investimentos-custo-medio-e-indicadores.md).
+
 ## Dashboard
 
 Indicadores (patrimônio líquido, saldo, receitas, despesas, resultado, taxa de
@@ -290,3 +332,6 @@ documentados nas respectivas fases.
 - [0007 — Modelo financeiro e regras de contabilização](./docs/adr/0007-regras-financeiras-e-contabilizacao.md)
 - [0008 — Repositórios, IndexedDB de demonstração e seed](./docs/adr/0008-persistencia-de-demonstracao.md)
 - [0009 — Escrita de lançamentos, recorrências e histórico](./docs/adr/0009-escrita-recorrencias-e-historico.md)
+- [0010 — Cartões, faturas, orçamentos e central de notificações](./docs/adr/0010-cartoes-orcamentos-e-notificacoes.md)
+- [0011 — Metas, aportes, planejamento e projeções](./docs/adr/0011-metas-e-planejamento.md)
+- [0012 — Investimentos: custo médio, movimentações com conta e indicadores](./docs/adr/0012-investimentos-custo-medio-e-indicadores.md)

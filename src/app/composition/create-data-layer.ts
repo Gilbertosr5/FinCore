@@ -12,7 +12,13 @@ import {
   DemoAuditLogRepository,
   type AuditLogRepository,
 } from '@/features/history';
-import { ApiInvestmentRepository, DemoInvestmentRepository } from '@/features/investments';
+import {
+  ApiInvestmentRepository,
+  ApiMarketIndicatorRepository,
+  DemoInvestmentRepository,
+  DemoMarketIndicatorRepository,
+  type MarketIndicatorRepository,
+} from '@/features/investments';
 import {
   ApiCategoryRepository,
   ApiTransactionRepository,
@@ -24,6 +30,8 @@ import { createDemoDataStore, type DemoDataStore } from '@/services/storage/demo
 
 export interface AppRepositories extends DashboardRepositories {
   audit: AuditLogRepository;
+  /** Indicadores de mercado (contrato futuro — indisponível na demonstração). */
+  market: MarketIndicatorRepository;
 }
 
 export interface DataLayer {
@@ -61,6 +69,7 @@ export function createDataLayer(options: CreateDataLayerOptions): DataLayer {
         goals: new ApiGoalRepository(http),
         investments: new ApiInvestmentRepository(http),
         audit: new ApiAuditLogRepository(http),
+        market: new ApiMarketIndicatorRepository(http),
       },
     };
   }
@@ -81,6 +90,7 @@ export function createDataLayer(options: CreateDataLayerOptions): DataLayer {
       goals: new DemoGoalRepository(store),
       investments: new DemoInvestmentRepository(store),
       audit: new DemoAuditLogRepository(store),
+      market: new DemoMarketIndicatorRepository(),
     },
   };
 }

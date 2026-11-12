@@ -6,6 +6,7 @@ import { PageLoader } from '@/components/feedback/PageLoader';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { UserMenu } from '@/features/auth';
+import { FinancialNotifications } from '@/features/dashboard';
 
 /** Shell das rotas autenticadas: sidebar, cabeçalho e área de conteúdo. */
 export function AppLayout() {
@@ -19,7 +20,11 @@ export function AppLayout() {
       </a>
       <Sidebar appName={appConfig.appName} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Header isDemo={appConfig.isDemo} userMenu={<UserMenu />} />
+        <Header
+          isDemo={appConfig.isDemo}
+          userMenu={<UserMenu />}
+          notifications={<FinancialNotifications />}
+        />
         <main id="main-content" tabIndex={-1} className="flex-1 p-4 outline-none md:p-6 lg:p-8">
           <Suspense fallback={<PageLoader />}>
             <Outlet />

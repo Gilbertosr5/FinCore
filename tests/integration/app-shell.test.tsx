@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { NAVIGATION_ITEMS } from '@/constants/navigation';
@@ -39,8 +39,13 @@ describe('estrutura da aplicação (autenticado)', () => {
 
     await user.click(within(nav).getByRole('link', { name: 'Orçamentos' }));
 
-    expect(router.state.location.pathname).toBe('/orcamentos');
-    expect(screen.getByRole('heading', { level: 1, name: 'Orçamentos' })).toBeInTheDocument();
+    // Rota com carregamento sob demanda: a navegação conclui após carregar a página.
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/orcamentos');
+    });
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Orçamentos' }),
+    ).toBeInTheDocument();
     expect(within(nav).getByRole('link', { name: 'Orçamentos' })).toHaveAttribute(
       'aria-current',
       'page',
@@ -48,8 +53,8 @@ describe('estrutura da aplicação (autenticado)', () => {
   });
 
   it('informa explicitamente que módulos futuros ainda não foram entregues', async () => {
-    await renderApp('/investimentos', { authenticated: true });
-    expect(await screen.findByText('Previsto para a Fase 7')).toBeInTheDocument();
+    await renderApp('/calendario', { authenticated: true });
+    expect(await screen.findByText('Previsto para a Fase 8')).toBeInTheDocument();
   });
 
   it('exibe página 404 para rotas inexistentes', async () => {
@@ -92,7 +97,9 @@ describe('estrutura da aplicação (autenticado)', () => {
 
     await user.click(within(drawer).getByRole('link', { name: 'Metas' }));
 
-    expect(router.state.location.pathname).toBe('/metas');
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/metas');
+    });
     expect(useUiStore.getState().mobileNavOpen).toBe(false);
   });
 
@@ -119,15 +126,29 @@ describe('estrutura da aplicação (autenticado)', () => {
     expect(screen.getAllByRole('option')).toHaveLength(1);
     await user.keyboard('{Enter}');
 
-    expect(router.state.location.pathname).toBe('/cartoes');
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/cartoes');
+    });
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
 
-  it('central de notificações abre com estado vazio', async () => {
+  it('central de notificações lista os alertas financeiros com link para o módulo', async () => {
     const user = userEvent.setup();
-    await renderApp('/dashboard', { authenticated: true });
+    const { router } = await renderApp('/dashboard', { authenticated: true });
 
-    await user.click(await screen.findByRole('button', { name: 'Notificações' }));
-    expect(await screen.findByText('Nenhuma notificação')).toBeInTheDocument();
+    // O contador aparece no rótulo assim que os alertas do mês são calculados.
+    const trigger = await screen.findByRole('button', { name: /^Notificações \(\d+ alerta/ });
+    await user.click(trigger);
+    const panel = await screen.findByRole('dialog', { name: 'Notificações' });
+    const links = within(panel).getAllByRole('link');
+    expect(links.length).toBeGreaterThan(0);
+
+    const budgetAlert = within(panel).queryAllByRole('link', { name: /Orçamento de/ })[0];
+    if (budgetAlert) {
+      await user.click(budgetAlert);
+      await waitFor(() => {
+        expect(router.state.location.pathname).toBe('/orcamentos');
+      });
+    }
   });
 });

@@ -8,11 +8,32 @@ import {
   type AccountsServices,
 } from '@/features/accounts';
 import {
+  BudgetsServicesContext,
+  createBudgetUseCases,
+  type BudgetsServices,
+} from '@/features/budgets';
+import {
+  createCreditCardUseCases,
+  CreditCardsServicesContext,
+  type CreditCardsServices,
+} from '@/features/credit-cards';
+import {
   DashboardServicesContext,
   GetDashboardOverviewUseCase,
   type DashboardServices,
 } from '@/features/dashboard';
+import { createGoalUseCases, GoalsServicesContext, type GoalsServices } from '@/features/goals';
 import { HistoryServicesContext, type HistoryServices } from '@/features/history';
+import {
+  createInvestmentUseCases,
+  InvestmentsServicesContext,
+  type InvestmentsServices,
+} from '@/features/investments';
+import {
+  LoadPlanningDataUseCase,
+  PlanningServicesContext,
+  type PlanningServices,
+} from '@/features/planning';
 import { DemoDataContext, type DemoDataManager } from '@/features/settings';
 import {
   createTransactionUseCases,
@@ -74,6 +95,60 @@ function createServices(layer: DataLayer, today: () => IsoDate) {
     isDemoData: layer.demoStore !== null,
   };
   const history: HistoryServices = { repository: repositories.audit };
+  const planning: PlanningServices = {
+    load: new LoadPlanningDataUseCase({
+      ...ledgerContext,
+      cards: repositories.creditCards,
+      budgets: repositories.budgets,
+      prepare,
+    }),
+  };
+  const investments: InvestmentsServices = {
+    useCases: createInvestmentUseCases({
+      ...ledgerContext,
+      investments: repositories.investments,
+      market: repositories.market,
+      // Aplicações, resgates e proventos com conta viram lançamentos gerenciados.
+      ledger: ledger.investments,
+    }),
+    today,
+  };
+  const goals: GoalsServices = {
+    useCases: createGoalUseCases({
+      ...ledgerContext,
+      goals: repositories.goals,
+      // Aportes com movimento de dinheiro viram transferências do livro de lançamentos.
+      transfers: {
+        create: (input) => ledger.createTransfer.execute(input),
+        remove: async (transferId) => {
+          const legs = (await repositories.transactions.findAll()).filter(
+            (tx) => tx.transfer?.id === transferId,
+          );
+          const [leg] = legs;
+          // Já excluída pelo usuário em Transações: nada a fazer.
+          if (leg) await ledger.remove.execute(leg.id);
+        },
+      },
+    }),
+    today,
+  };
+  const creditCards: CreditCardsServices = {
+    useCases: createCreditCardUseCases({
+      ...ledgerContext,
+      cards: repositories.creditCards,
+      prepare,
+    }),
+    today,
+  };
+  const budgets: BudgetsServices = {
+    useCases: createBudgetUseCases({
+      ...ledgerContext,
+      budgets: repositories.budgets,
+      cards: repositories.creditCards,
+      prepare,
+    }),
+    today,
+  };
 
   const store = layer.demoStore;
   const demo: DemoDataManager | null = store && {
@@ -86,7 +161,18 @@ function createServices(layer: DataLayer, today: () => IsoDate) {
     },
   };
 
-  return { transactions, accounts, dashboard, history, demo };
+  return {
+    transactions,
+    accounts,
+    creditCards,
+    budgets,
+    goals,
+    investments,
+    planning,
+    dashboard,
+    history,
+    demo,
+  };
 }
 
 /**
@@ -112,9 +198,21 @@ export function DataProvider({ children, dataLayer, today = defaultToday }: Data
     <DashboardServicesContext.Provider value={services.dashboard}>
       <TransactionsServicesContext.Provider value={services.transactions}>
         <AccountsServicesContext.Provider value={services.accounts}>
-          <HistoryServicesContext.Provider value={services.history}>
-            <DemoDataContext.Provider value={services.demo}>{children}</DemoDataContext.Provider>
-          </HistoryServicesContext.Provider>
+          <CreditCardsServicesContext.Provider value={services.creditCards}>
+            <BudgetsServicesContext.Provider value={services.budgets}>
+              <GoalsServicesContext.Provider value={services.goals}>
+                <PlanningServicesContext.Provider value={services.planning}>
+                  <InvestmentsServicesContext.Provider value={services.investments}>
+                    <HistoryServicesContext.Provider value={services.history}>
+                      <DemoDataContext.Provider value={services.demo}>
+                        {children}
+                      </DemoDataContext.Provider>
+                    </HistoryServicesContext.Provider>
+                  </InvestmentsServicesContext.Provider>
+                </PlanningServicesContext.Provider>
+              </GoalsServicesContext.Provider>
+            </BudgetsServicesContext.Provider>
+          </CreditCardsServicesContext.Provider>
         </AccountsServicesContext.Provider>
       </TransactionsServicesContext.Provider>
     </DashboardServicesContext.Provider>

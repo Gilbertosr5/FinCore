@@ -69,7 +69,20 @@ export interface InvestmentMovement {
   quantity: string | null;
   /** Valor financeiro da movimentação, sempre positivo. */
   amount: Money;
+  /**
+   * Lançamento na conta registrado junto (aplicação/resgate `kind: investment`
+   * ou receita de proventos). null = movimentação só na carteira (ADR 0012).
+   */
+  transactionId: string | null;
 }
+
+/** Classes negociadas em quantidade (ações, cotas, unidades): compra/venda exigem quantidade. */
+export const QUANTITY_ASSET_CLASSES: ReadonlySet<AssetClass> = new Set([
+  'stocks',
+  'reits',
+  'etf',
+  'crypto',
+]);
 
 /**
  * Origem do valor de mercado. A interface sempre diferencia valores informados

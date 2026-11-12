@@ -18,6 +18,16 @@ export function TableBody({ className, ...props }: ComponentProps<'tbody'>) {
   return <tbody className={cn('[&_tr:last-child]:border-0', className)} {...props} />;
 }
 
+export function TableFooter({ className, ...props }: ComponentProps<'tfoot'>) {
+  return (
+    <tfoot
+      data-slot="table-footer"
+      className={cn('border-t border-border bg-muted/50 [&>tr]:last:border-b-0', className)}
+      {...props}
+    />
+  );
+}
+
 export function TableRow({ className, ...props }: ComponentProps<'tr'>) {
   return (
     <tr

@@ -40,3 +40,18 @@ export const AUTH_ROUTE_PATHS: readonly string[] = [
 export function accountStatementPath(accountId: string): string {
   return `${ROUTES.accounts}/${encodeURIComponent(accountId)}`;
 }
+
+/** Caminho dos detalhes (faturas, compras e pagamentos) de um cartão. */
+export function creditCardPath(cardId: string): string {
+  return `${ROUTES.creditCards}/${encodeURIComponent(cardId)}`;
+}
+
+/** Caminho dos detalhes (aportes, projeção e histórico) de uma meta. */
+export function goalPath(goalId: string): string {
+  return `${ROUTES.goals}/${encodeURIComponent(goalId)}`;
+}
+
+/** Caminho dos detalhes (movimentações, avaliações e evolução) de um ativo. */
+export function assetPath(assetId: string): string {
+  return `${ROUTES.investments}/${encodeURIComponent(assetId)}`;
+}

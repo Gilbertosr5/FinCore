@@ -35,6 +35,8 @@ export function buildAlerts(input: AlertInput): DashboardAlert[] {
       alerts.push({
         id: `negative-${account.id}`,
         severity: 'critical',
+        module: 'accounts',
+        entityId: account.id,
         title: `Saldo negativo em ${account.name}`,
         description: `Saldo atual de ${formatMoney(balance)}.`,
       });
@@ -47,6 +49,7 @@ export function buildAlerts(input: AlertInput): DashboardAlert[] {
     alerts.push({
       id: 'overdue-bills',
       severity: 'critical',
+      module: 'transactions',
       title:
         overdueBills.length === 1 ? '1 conta vencida' : `${overdueBills.length} contas vencidas`,
       description: `Total de ${formatMoney(total)} em atraso.`,
@@ -61,6 +64,7 @@ export function buildAlerts(input: AlertInput): DashboardAlert[] {
     alerts.push({
       id: 'bills-due-soon',
       severity: 'warning',
+      module: 'transactions',
       title:
         soonBills.length === 1
           ? '1 conta vence nos próximos 3 dias'
@@ -75,6 +79,8 @@ export function buildAlerts(input: AlertInput): DashboardAlert[] {
       alerts.push({
         id: `invoice-overdue-${invoice.cardId}-${invoice.month}`,
         severity: 'critical',
+        module: 'credit-cards',
+        entityId: invoice.cardId,
         title: `Fatura vencida — ${cardName}`,
         description: `Fatura de ${month}: ${formatMoney(invoice.outstanding)} em aberto desde ${formatDateBR(invoice.dueDate)}.`,
       });
@@ -82,6 +88,8 @@ export function buildAlerts(input: AlertInput): DashboardAlert[] {
       alerts.push({
         id: `invoice-due-${invoice.cardId}-${invoice.month}`,
         severity: 'info',
+        module: 'credit-cards',
+        entityId: invoice.cardId,
         title: `Fatura ${cardName} vence ${daysUntilDue === 0 ? 'hoje' : `em ${daysUntilDue} dia${daysUntilDue === 1 ? '' : 's'}`}`,
         description: `${formatMoney(invoice.outstanding)} — vencimento em ${formatDateBR(invoice.dueDate)}.`,
       });
@@ -93,6 +101,7 @@ export function buildAlerts(input: AlertInput): DashboardAlert[] {
       alerts.push({
         id: `budget-exceeded-${usage.budget.id}`,
         severity: 'critical',
+        module: 'budgets',
         title: `Orçamento de ${usage.budget.name} excedido`,
         description: `${formatMoney(usage.excess)} acima do limite de ${formatMoney(usage.budget.amount)}.`,
       });
@@ -100,6 +109,7 @@ export function buildAlerts(input: AlertInput): DashboardAlert[] {
       alerts.push({
         id: `budget-warning-${usage.budget.id}`,
         severity: 'warning',
+        module: 'budgets',
         title: `Orçamento de ${usage.budget.name} em ${formatPercent(Math.floor(usage.percent))}`,
         description: `Restam ${formatMoney(usage.remaining)} de ${formatMoney(usage.budget.amount)}.`,
       });
@@ -111,6 +121,8 @@ export function buildAlerts(input: AlertInput): DashboardAlert[] {
       alerts.push({
         id: `card-limit-${card.cardId}`,
         severity: 'warning',
+        module: 'credit-cards',
+        entityId: card.cardId,
         title: `Limite do ${card.name} quase esgotado`,
         description: `${formatPercent(Math.round(card.usage.percentUsed))} utilizado; disponível ${formatMoney(card.usage.available)}.`,
       });
@@ -121,6 +133,7 @@ export function buildAlerts(input: AlertInput): DashboardAlert[] {
     alerts.push({
       id: 'negative-result',
       severity: 'warning',
+      module: 'dashboard',
       title: 'Despesas acima das receitas no período',
       description: `Resultado de ${formatMoney(input.totals.result)}.`,
     });

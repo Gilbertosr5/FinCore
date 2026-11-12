@@ -15,45 +15,45 @@ escreve em **português do Brasil**; responda sempre em pt-BR.
 - O que já foi entregue, testes e problemas conhecidos: [`PROJECT_STATUS.md`](./PROJECT_STATUS.md)
 - **Todas as pendências acumuladas** (fases restantes, itens adiados, backend, decisões a confirmar): [`PENDENCIAS.md`](./PENDENCIAS.md)
 - Prompt pronto para abrir uma nova sessão: [`docs/PROMPT_NOVA_SESSAO.md`](./docs/PROMPT_NOVA_SESSAO.md)
-- Decisões arquiteturais: [`docs/adr/`](./docs/adr/) (0001–0009)
+- Decisões arquiteturais: [`docs/adr/`](./docs/adr/) (0001–0012)
 - Contratos HTTP com o backend futuro: [`docs/api-contract.md`](./docs/api-contract.md),
   [`docs/auth-contract.md`](./docs/auth-contract.md)
 
 ## 2. Estado atual
 
-| Fase | Descrição                                                                                                       | Status                                                                                        |
-| ---- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| 1–3  | Fundação, autenticação/layout, dashboard                                                                        | ✅ (commits "Fase 1 e Fase 2", "Fase 3")                                                      |
-| 4    | Gestão financeira (lançamentos, recorrências, parcelas, transferências, contas, extrato, categorias, histórico) | ✅ concluída em 11/11/2026 — **não commitada** (o usuário faz o commit; confira `git status`) |
-| 5    | Cartões e orçamentos                                                                                            | ⏳ **próxima**                                                                                |
-| 6–9  | Metas/planejamento, investimentos, calendário/relatórios, qualidade final                                       | —                                                                                             |
+| Fase | Descrição                                                                     | Status                                                                                        |
+| ---- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1–4  | Fundação, autenticação/layout, dashboard, gestão financeira                   | ✅ (commits "Fase 1 e Fase 2", "Fase 3", "Fase 4")                                            |
+| 5–6  | Cartões e orçamentos; metas e planejamento                                    | ✅ concluídas em 11/11/2026 — **não commitadas** (junto com a Fase 7)                         |
+| 7    | Investimentos (custo médio, movimentações com conta, avaliações, indicadores) | ✅ concluída em 11/11/2026 — **não commitada** (o usuário faz o commit; confira `git status`) |
+| 8    | Calendário e relatórios                                                       | ⏳ **próxima**                                                                                |
+| 9    | Qualidade final                                                               | —                                                                                             |
 
-Última verificação completa: `npm run check` (354 testes), `npm run build` e
-`npm run test:e2e` (23 aprovados, 1 ignorado de propósito) — tudo verde.
+Última verificação completa: `npm run check` (478 testes), `npm run build` e
+`npm run test:e2e` (35 aprovados, 1 ignorado de propósito) — tudo verde.
 Detalhes do que existe: [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
 
-### Fase 5 — roteiro sugerido (Cartões e orçamentos)
+### Fase 8 — roteiro sugerido (Calendário e relatórios)
 
-Requisitos completos em [`docs/ROADMAP.md`](./docs/ROADMAP.md#fase-5--cartões-e-orçamentos).
-O domínio de cartões/faturas e de orçamentos **já existe** (ADR 0007) — reutilize:
-`src/features/credit-cards/domain/services/{invoice-schedule,invoices}.ts` e
-`src/features/budgets/domain/services/budget-usage.ts`.
+Requisitos completos em [`docs/ROADMAP.md`](./docs/ROADMAP.md#fase-8--calendário-e-relatórios).
+Quase tudo é **leitura e agregação** do que já existe — reutilize, não recalcule:
+`getFinancialEntries` e `collectFlows` (receitas/despesas por competência),
+`computeAccountBalances`, `buildInvoices`/`getInvoiceDates` (vencimentos de faturas),
+`buildMissingOccurrences` (recorrências futuras), `computeBudgetUsage`,
+`computeGoalProgress`, `computePortfolio`/`buildEvolution` e o dashboard.
 
-- [ ] Escrita nos repositórios de cartões (`save` do cartão; `commit` de compras —
-      mesmo padrão de `TransactionRepository.commit`) e de orçamentos (`save/remove`),
-      Demo + Api, contrato em `docs/api-contract.md`
-- [ ] Casos de uso (`src/features/credit-cards/application`): cadastrar/editar cartão,
-      registrar compra (avulsa e parcelada), cancelar compra, **pagar fatura** (cria
-      transação `card_payment` com `cardPayment.invoiceMonth` na conta de pagamento —
-      nunca despesa), histórico de pagamentos; orçamentos (CRUD, mensal/anual,
-      categoria ou geral, limiar de alerta, histórico mês a mês planejado × realizado)
-- [ ] Contexto + hooks + composição no `DataProvider` (ver como foi feito para
-      `transactions` e `accounts`); invalidar com `invalidateFinancialData`
-- [ ] Telas `/cartoes` (cartões com limite usado/disponível, faturas por mês com
-      status, compras, parcelas futuras, pagar fatura) e `/orcamentos` (barras de
-      consumo, alertas 80%/excedido, histórico); registrar em `deliveredModuleRoutes`
-- [ ] Central de notificações do cabeçalho alimentada pelos alertas do dashboard
-- [ ] Testes: regras (in-memory), integração e E2E; ADR 0010; docs e este arquivo
+- [ ] **Calendário** (`/calendario`): eventos de contas a pagar/receber, vencimentos de
+      faturas, parcelas, receitas previstas, recorrências, aportes e prazos de metas;
+      visão mensal e semanal, navegação, detalhes, filtros por tipo. Lembretes: só o
+      **contrato** (push/e-mail dependem do backend)
+- [ ] **Relatórios** (`/relatorios`): receitas/despesas por período, categoria e conta,
+      evolução patrimonial e dos investimentos, orçamento × realizado, histórico de
+      economia, fluxo de caixa, compromissos futuros; indicadores (taxa de poupança,
+      comprometimento da renda, média mensal, fixas × variáveis via `category.nature`)
+- [ ] **Exportação CSV e PDF** respeitando exatamente período e filtros da tela;
+      escolher biblioteca de PDF (pendência antiga) — carregar sob demanda (não no chunk `App`)
+- [ ] Filtros na URL; tabelas acessíveis; testes de regras (agregações batem com os
+      módulos), integração e E2E; ADR 0013; docs e este arquivo
 
 ## 3. Como rodar
 
@@ -135,12 +135,45 @@ suporta 10), Vite 8, React 19, React Router 8, Tailwind 4, Vitest 5, Recharts 3,
 - **Transações via UI:** formulários aparecem só após carregar contas e categorias — em testes, aguarde o primeiro campo com `findByLabelText`.
 - Testes de integração usam `tests/helpers/render-app.tsx` (app completo em memória,
   `fake-indexeddb`, banco isolado por teste, hoje fixo `2026-11-06`).
-- Testes de regras usam `tests/helpers/in-memory-ledger.ts` e
-  `tests/helpers/finance-fixtures.ts`.
+- Testes de regras usam `tests/helpers/in-memory-ledger.ts`, `tests/helpers/in-memory-cards.ts`
+  (livro + cartões + orçamentos em memória) e `tests/helpers/finance-fixtures.ts`.
+- **Rotas `lazy` em testes de integração:** a navegação só conclui depois de carregar a
+  página — use `await waitFor(() => expect(router.state.location.pathname)...)` e
+  `findByRole` para o título (o `h1` do cabeçalho troca depois).
+- **Botões habilitados só com dados carregados** (ex.: "Nova compra"): aguarde um texto
+  da lista antes de clicar, senão o clique cai num botão desabilitado.
+- **Cabeçalho:** `Header` recebe `userMenu` e `notifications` como slots; a central
+  (`FinancialNotifications`) vem da feature dashboard e reutiliza o cache do mês atual.
+  Com dados de demonstração há alertas — o estado vazio é testado no componente.
+- **Rolagem em listas:** não use `scrollIntoView` para centralizar itens ao montar
+  (rola a página inteira); ajuste `scrollLeft/scrollTop` do próprio contêiner
+  (ver `InvoicePanel`).
+- **Recharts no carregamento inicial:** o `AppLayout` importa `@/features/dashboard` (central de
+  notificações) de forma imediata. Não reexporte componentes de gráfico por índices de
+  feature: gráficos compartilhados ficam em `components/data-display` (ex.: `TrendChart`).
+  Confira o tamanho do chunk `App` no `npm run build` (hoje ~381 kB).
+- **Planejamento** não grava nada: `usePlanningSnapshot` lê os dados e as páginas
+  calculam projeções com funções puras (`buildBalanceProjection` etc.) em `useMemo`.
+  Memoize entradas derivadas (cenário, compra) para não precisar de `eslint-disable`.
+- **Metas:** aportes com transferência usam `GoalTransferPort` (ligado em `DataProvider`
+  aos casos de uso de lançamentos). `tests/helpers/in-memory-goals.ts` simula falha de
+  gravação para testar a compensação.
+- **Investimentos:** lançamentos de conta de aplicações/resgates/proventos são criados por
+  `InvestmentLedgerCommands` (porta `InvestmentLedgerPort`); `tests/helpers/in-memory-investments.ts`
+  simula falha para testar a compensação. Valor atual = última avaliação + operações
+  posteriores pelo custo; operação anterior à avaliação devolve `revaluation` (a tela
+  pede para confirmar o valor).
+- **Console do navegador interno** acumula erros antigos de HMR: use `limit` baixo em
+  `read_console_messages` e compare a contagem antes/depois de recarregar.
+- **Scripts de edição:** heredocs com template strings/aspas quebram no Git Bash — grave
+  o script `.cjs` no scratchpad com a ferramenta de escrita e execute com `node`.
+- **Fatura aberta** = `getOpenInvoiceMonth(card, hoje)` (mês em que uma compra de hoje
+  entraria). Pagamentos de fatura são transações `card_payment` — use os casos de uso de
+  cartões, nunca os de Transações (que recusam editá-las).
 
 ## 9. Para retomar
 
-Diga ao assistente: **"Leia `fincore/CONTINUAR.md` e inicie a Fase 5"** (ou a
+Diga ao assistente: **"Leia `fincore/CONTINUAR.md` e inicie a Fase 8"** (ou a
 próxima fase pendente). Ele deve:
 
 1. ler este arquivo, `PENDENCIAS.md`, `docs/ROADMAP.md` e `PROJECT_STATUS.md`;

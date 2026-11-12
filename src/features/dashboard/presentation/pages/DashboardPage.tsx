@@ -1,5 +1,6 @@
 import { CloudOff, FlaskConical, RefreshCw } from 'lucide-react';
 
+import { TrendChart } from '@/components/data-display/TrendChart';
 import { StatusScreen } from '@/components/feedback/StatusScreen';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -9,7 +10,6 @@ import { AlertsPanel } from '../components/AlertsPanel';
 import { BudgetsPanel } from '../components/BudgetsPanel';
 import { DonutChart } from '../components/charts/DonutChart';
 import { IncomeExpenseChart } from '../components/charts/IncomeExpenseChart';
-import { TrendChart } from '../components/charts/TrendChart';
 import { DashboardSkeleton } from '../components/DashboardSkeleton';
 import { GoalsPanel } from '../components/GoalsPanel';
 import { KpiGrid } from '../components/KpiGrid';

@@ -20,3 +20,4 @@ export {
   type DashboardServices,
 } from './presentation/context/dashboard-context';
 export { dashboardQueryKeys } from './presentation/hooks/use-dashboard-overview';
+export { FinancialNotifications } from './presentation/components/FinancialNotifications';

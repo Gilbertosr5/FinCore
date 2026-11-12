@@ -12,11 +12,17 @@ import type { DateRange } from './period';
 
 export type AlertSeverity = 'critical' | 'warning' | 'info';
 
+/** Módulo onde o usuário resolve o alerta (a interface converte em rota). */
+export type AlertModule = 'accounts' | 'transactions' | 'credit-cards' | 'budgets' | 'dashboard';
+
 export interface DashboardAlert {
   id: string;
   severity: AlertSeverity;
   title: string;
   description: string;
+  module: AlertModule;
+  /** Entidade relacionada (ex.: cartão), quando houver página própria. */
+  entityId?: string;
 }
 
 export interface MonthlyPoint {

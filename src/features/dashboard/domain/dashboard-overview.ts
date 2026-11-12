@@ -7,6 +7,7 @@ import {
 import {
   computeBudgetUsage,
   getBudgetPeriod,
+  sumBudgetSpending,
 } from '@/features/budgets/domain/services/budget-usage';
 import {
   buildInvoices,
@@ -89,19 +90,12 @@ export function buildDashboardOverview(
 
   const budgets = data.budgets
     .filter((budget) => budget.active)
-    .map((budget) => {
-      const period = getBudgetPeriod(budget, today);
-      const spent = Money.sum(
-        entriesInRange(entries, period)
-          .filter(
-            (entry) =>
-              entry.type === 'expense' &&
-              (budget.categoryId === null || entry.categoryId === budget.categoryId),
-          )
-          .map((entry) => entry.amount),
-      );
-      return computeBudgetUsage(budget, spent);
-    })
+    .map((budget) =>
+      computeBudgetUsage(
+        budget,
+        sumBudgetSpending(budget, entries, getBudgetPeriod(budget, today)),
+      ),
+    )
     .sort((a, b) => (b.percent ?? 0) - (a.percent ?? 0));
 
   const goals = data.goals

@@ -320,6 +320,7 @@ export function createDemoSeed(referenceDate: string): DemoSeedData {
       type: quantity ? 'buy' : 'contribution',
       date,
       quantity,
+      transactionId: `${movementId}-tx`,
       amount,
     });
     const asset = ASSETS.find((item) => item.id === assetId);
@@ -342,7 +343,15 @@ export function createDemoSeed(referenceDate: string): DemoSeedData {
   const addDividend = (assetId: string, amount: Money, date: IsoDate) => {
     if (date > today) return;
     const asset = ASSETS.find((item) => item.id === assetId);
-    movements.push({ id: nextId('mov'), assetId, type: 'dividend', date, quantity: null, amount });
+    movements.push({
+      id: nextId('mov'),
+      assetId,
+      type: 'dividend',
+      date,
+      quantity: null,
+      amount,
+      transactionId: null,
+    });
     addEntry(
       'income',
       ACC.broker,
@@ -376,7 +385,14 @@ export function createDemoSeed(referenceDate: string): DemoSeedData {
 
   const addContribution = (goalId: string, amount: Money, date: IsoDate) => {
     if (date > today) return;
-    contributions.push({ id: nextId('gc'), goalId, date, amount, type: 'deposit' });
+    contributions.push({
+      id: nextId('gc'),
+      goalId,
+      date,
+      amount,
+      type: 'deposit',
+      transferId: null,
+    });
   };
 
   // Saldo inicial da poupança corresponde à reserva já acumulada.

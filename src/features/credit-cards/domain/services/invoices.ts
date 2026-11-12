@@ -2,7 +2,12 @@ import type { Transaction } from '@/features/transactions/domain/entities/transa
 import type { IsoDate, MonthKey } from '@/lib/dates';
 import { Money } from '@/lib/money';
 
-import { expandInstallments, getInvoiceDates, type CardInstallment } from './invoice-schedule';
+import {
+  expandInstallments,
+  getInvoiceDates,
+  getInvoiceMonthForPurchase,
+  type CardInstallment,
+} from './invoice-schedule';
 import type { CardPurchase, CreditCard } from '../entities/credit-card';
 
 export type InvoiceStatus = 'future' | 'open' | 'closed' | 'partially_paid' | 'paid' | 'overdue';
@@ -60,13 +65,55 @@ function resolveStatus(
 ): InvoiceStatus {
   if (!total.isZero() && paid.greaterThanOrEqual(total)) return 'paid';
   if (today < dates.closingDate) return isCurrentOpen ? 'open' : 'future';
+  // Fatura fechada sem nenhum valor: nada a pagar.
+  if (total.isZero()) return 'paid';
   if (today > dates.dueDate) return 'overdue';
   return paid.isPositive() ? 'partially_paid' : 'closed';
+}
+
+/** Mês da fatura aberta hoje: é nela que uma compra feita hoje entraria. */
+export function getOpenInvoiceMonth(
+  card: Pick<CreditCard, 'closingDay' | 'dueDay'>,
+  today: IsoDate,
+): MonthKey {
+  return getInvoiceMonthForPurchase(card, today);
+}
+
+function assembleInvoice(
+  card: CreditCard,
+  month: MonthKey,
+  installments: readonly CardInstallment[],
+  payments: readonly Transaction[],
+  today: IsoDate,
+): Invoice {
+  const currency = card.limit.currency;
+  const dates = getInvoiceDates(card, month);
+  const monthInstallments = installments.filter((item) => item.invoiceMonth === month);
+  const total = Money.sum(
+    monthInstallments.map((item) => item.amount),
+    currency,
+  );
+  const paid = Money.sum(
+    payments.filter((tx) => tx.cardPayment?.invoiceMonth === month).map((tx) => tx.amount),
+    currency,
+  );
+  const isCurrentOpen = month === getOpenInvoiceMonth(card, today);
+  return {
+    cardId: card.id,
+    month,
+    ...dates,
+    total,
+    paid,
+    outstanding: total.subtract(paid).max(Money.zero(currency)),
+    status: resolveStatus(dates, total, paid, today, isCurrentOpen),
+    installments: monthInstallments,
+  };
 }
 
 /**
  * Faturas de um cartão, derivadas das parcelas e dos pagamentos. Nunca são
  * armazenadas: não há como o total da fatura divergir das compras.
+ * A fatura aberta é a do mês em que uma compra feita hoje entraria.
  */
 export function buildInvoices(
   card: CreditCard,
@@ -82,34 +129,24 @@ export function buildInvoices(
       ...payments.flatMap((tx) => (tx.cardPayment ? [tx.cardPayment.invoiceMonth] : [])),
     ]),
   ].sort();
+  return months.map((month) => assembleInvoice(card, month, installments, payments, today));
+}
 
-  const currency = card.limit.currency;
-  let openAssigned = false;
-
-  return months.map((month) => {
-    const dates = getInvoiceDates(card, month);
-    const monthInstallments = installments.filter((item) => item.invoiceMonth === month);
-    const total = Money.sum(
-      monthInstallments.map((item) => item.amount),
-      currency,
-    );
-    const paid = Money.sum(
-      payments.filter((tx) => tx.cardPayment?.invoiceMonth === month).map((tx) => tx.amount),
-      currency,
-    );
-    const isCurrentOpen = !openAssigned && today < dates.closingDate;
-    if (isCurrentOpen) openAssigned = true;
-    return {
-      cardId: card.id,
-      month,
-      ...dates,
-      total,
-      paid,
-      outstanding: total.subtract(paid).max(Money.zero(currency)),
-      status: resolveStatus(dates, total, paid, today, isCurrentOpen),
-      installments: monthInstallments,
-    };
-  });
+/** Fatura de um mês específico, mesmo que vazia (ex.: fatura aberta sem compras). */
+export function buildInvoiceForMonth(
+  card: CreditCard,
+  purchases: readonly CardPurchase[],
+  transactions: readonly Transaction[],
+  month: MonthKey,
+  today: IsoDate,
+): Invoice {
+  return assembleInvoice(
+    card,
+    month,
+    getCardInstallments(card, purchases),
+    getCardPayments(card.id, transactions),
+    today,
+  );
 }
 
 /**
