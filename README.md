@@ -22,7 +22,7 @@ sem reestruturação.
 | 1    | Fundação arquitetural, design tokens, qualidade, núcleo monetário e de datas | ✅ Concluída |
 | 2    | Autenticação (adaptadores dev/REST), rotas protegidas, layout completo       | ✅ Concluída |
 | 3    | Dashboard com indicadores e gráficos                                         | ✅ Concluída |
-| 4    | Receitas, despesas, contas, transferências, recorrências, parcelamentos      | ⏳           |
+| 4    | Receitas, despesas, contas, transferências, recorrências, parcelamentos      | ✅ Concluída |
 | 5    | Cartões, faturas, orçamentos e alertas                                       | ⏳           |
 | 6    | Metas e planejamento financeiro                                              | ⏳           |
 | 7    | Investimentos                                                                | ⏳           |
@@ -80,8 +80,9 @@ fincore/
 │   ├── constants/         # rotas, navegação, chaves de storage
 │   ├── features/
 │   │   ├── auth/          # domain / application / infrastructure / presentation
-│   │   ├── accounts/      # contas e saldos
-│   │   ├── transactions/  # movimentações, categorias, regras de contabilização
+│   │   ├── accounts/      # contas, saldos, extrato (CRUD e arquivamento)
+│   │   ├── transactions/  # lançamentos, transferências, parcelas, recorrências, categorias
+│   │   ├── history/       # histórico de alterações (auditoria funcional)
 │   │   ├── credit-cards/  # cartões, parcelas e faturas
 │   │   ├── budgets/       # orçamentos e consumo
 │   │   ├── goals/         # metas e progresso
@@ -178,7 +179,12 @@ de configuração. Variáveis `VITE_*` são públicas — nunca coloque segredos
 - **Integração** em `tests/integration`: app completa em memória — rotas protegidas,
   login, cadastro, logout, sessão expirada, recuperação/redefinição e alteração de
   senha, navegação, busca global, tema, sidebar, dashboard (valores exibidos =
-  caso de uso, filtros, URL, visão em tabela) e restauração dos dados de demonstração.
+  caso de uso, filtros, URL, visão em tabela), restauração dos dados de demonstração,
+  criação/edição/pagamento/exclusão de lançamentos, parcelamento, transferências,
+  contas, extrato e categorias.
+- **Regras de lançamentos** com repositórios em memória (`tests/helpers/in-memory-ledger.ts`):
+  recorrências (todas as frequências, idempotência, exceções, encerramento), parcelas,
+  transferências, situações, listagem/filtros/paginação, categorias, contas e extrato.
 - **E2E** em `tests/e2e` (Playwright, Chromium desktop e Pixel 7). Na primeira vez:
   `npx playwright install chromium`.
 
@@ -195,6 +201,22 @@ npm run preview
 ```
 
 Em produção, `VITE_AUTH_ADAPTER=dev` é bloqueado (exceto com `VITE_DEMO_MODE=true`).
+
+## Lançamentos e contas
+
+- **Transações** (`/transacoes`): receitas, despesas e transferências com filtros na
+  URL (mês, tipo, situação, categoria, conta, busca sem acentos, ordenação, página),
+  totais do filtro, tabela no desktop e cartões no celular. Ações: editar, duplicar,
+  marcar como pago/recebido, desfazer, cancelar, reativar e excluir — em séries, com
+  escolha "somente este" ou "este e os próximos". Detalhes com histórico de alterações.
+- **Repetição**: parcelado (valor total dividido sem perder centavos) ou recorrente
+  (diária a anual, com data final opcional; ocorrências geradas automaticamente até
+  o fim do mês seguinte, sem duplicar).
+- **Contas** (`/contas`): saldos, a pagar/receber, saldo previsto, saldo negativo
+  destacado, criar/editar/arquivar, transferir e **extrato** (`/contas/:id`) com
+  saldo acumulado.
+- **Categorias** personalizadas em Configurações.
+- Regras: [ADR 0009](./docs/adr/0009-escrita-recorrencias-e-historico.md).
 
 ## Dashboard
 
@@ -267,3 +289,4 @@ documentados nas respectivas fases.
 - [0006 — Autenticação independente de provedor e proteção de rotas](./docs/adr/0006-autenticacao-e-rotas.md)
 - [0007 — Modelo financeiro e regras de contabilização](./docs/adr/0007-regras-financeiras-e-contabilizacao.md)
 - [0008 — Repositórios, IndexedDB de demonstração e seed](./docs/adr/0008-persistencia-de-demonstracao.md)
+- [0009 — Escrita de lançamentos, recorrências e histórico](./docs/adr/0009-escrita-recorrencias-e-historico.md)

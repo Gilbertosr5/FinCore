@@ -12,3 +12,20 @@ export {
   ApiAccountRepository,
   DemoAccountRepository,
 } from './infrastructure/account.repositories';
+export {
+  AccountError,
+  ACCOUNT_NAME_MAX_LENGTH,
+  createAccountUseCases,
+  type AccountContext,
+  type AccountInput,
+  type AccountStatement,
+  type AccountSummary,
+  type AccountUseCases,
+  type StatementLine,
+} from './application/account-use-cases';
+export {
+  AccountsServicesContext,
+  useAccountsServices,
+  type AccountsServices,
+} from './presentation/context/accounts-context';
+export * from './presentation/hooks/use-accounts';

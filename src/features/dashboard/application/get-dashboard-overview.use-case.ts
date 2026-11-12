@@ -30,6 +30,8 @@ export class GetDashboardOverviewUseCase {
     private readonly repositories: DashboardRepositories,
     /** Data atual no fuso do usuário (injetável para testes). */
     private readonly today: () => IsoDate,
+    /** Executado antes da leitura (ex.: gerar ocorrências de recorrências). */
+    private readonly prepare?: () => Promise<unknown>,
   ) {}
 
   async execute(selection: PeriodSelection): Promise<DashboardOverview> {
@@ -37,6 +39,7 @@ export class GetDashboardOverviewUseCase {
       const error = validateCustomRange(selection.range);
       if (error) throw new DomainError('invalid_period', error);
     }
+    await this.prepare?.();
     const today = this.today();
     const { accounts, categories, transactions, creditCards, budgets, goals, investments } =
       this.repositories;

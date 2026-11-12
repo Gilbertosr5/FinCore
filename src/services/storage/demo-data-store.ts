@@ -24,6 +24,8 @@ export const DEMO_TABLES = [
   'assets',
   'investmentMovements',
   'assetValuations',
+  'recurrences',
+  'auditLog',
 ] as const;
 
 export type DemoTableName = (typeof DEMO_TABLES)[number];
@@ -49,10 +51,15 @@ class DemoDatabase extends Dexie {
 
   constructor(name: string) {
     super(name);
-    this.version(1).stores({
+    const stores = (tables: readonly string[]) => ({
       meta: 'key',
-      ...Object.fromEntries(DEMO_TABLES.map((table) => [table, 'id'])),
+      ...Object.fromEntries(tables.map((table) => [table, 'id'])),
     });
+    // v1: tabelas da Fase 3. v2 (Fase 4): recorrências e histórico de alterações.
+    this.version(1).stores(
+      stores(DEMO_TABLES.filter((t) => t !== 'recurrences' && t !== 'auditLog')),
+    );
+    this.version(2).stores(stores(DEMO_TABLES));
   }
 
   records(table: DemoTableName): Table<DemoRecord, string> {
@@ -73,8 +80,17 @@ export interface DemoDataStoreOptions {
   getReferenceDate: () => string;
 }
 
+/** Alterações aplicadas em uma única transação do IndexedDB (tudo ou nada). */
+export interface DemoWriteBatch {
+  put?: Partial<Record<DemoTableName, DemoRecord[]>>;
+  remove?: Partial<Record<DemoTableName, string[]>>;
+}
+
 export interface DemoDataStore {
   readAll(table: DemoTableName): Promise<DemoRecord[]>;
+  get(table: DemoTableName, id: string): Promise<DemoRecord | undefined>;
+  /** Grava e remove registros atomicamente: se algo falhar, nada é aplicado. */
+  write(batch: DemoWriteBatch): Promise<void>;
   /** Apaga tudo e recria o ambiente de demonstração com a data de referência atual. */
   reset(): Promise<DemoSeedInfo>;
   getInfo(): Promise<DemoSeedInfo | null>;
@@ -121,6 +137,29 @@ export function createDemoDataStore(options: DemoDataStoreOptions): DemoDataStor
     async readAll(table) {
       await ensureSeeded();
       return db.records(table).toArray();
+    },
+    async get(table, id) {
+      await ensureSeeded();
+      return db.records(table).get(id);
+    },
+    async write(batch) {
+      await ensureSeeded();
+      const tables = [
+        ...new Set([...Object.keys(batch.put ?? {}), ...Object.keys(batch.remove ?? {})]),
+      ] as DemoTableName[];
+      if (tables.length === 0) return;
+      await db.transaction(
+        'rw',
+        tables.map((table) => db.records(table)),
+        async () => {
+          for (const table of tables) {
+            const removals = batch.remove?.[table];
+            if (removals?.length) await db.records(table).bulkDelete(removals);
+            const puts = batch.put?.[table];
+            if (puts?.length) await db.records(table).bulkPut(puts);
+          }
+        },
+      );
     },
     async reset() {
       await ensureSeeded();

@@ -36,6 +36,15 @@ if (!('ResizeObserver' in globalThis)) {
   };
 }
 
+// O Select do Radix usa captura de ponteiro e scrollIntoView, ausentes no jsdom.
+if (typeof Element.prototype.hasPointerCapture !== 'function') {
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.releasePointerCapture = () => undefined;
+}
+if (typeof Element.prototype.scrollIntoView !== 'function') {
+  Element.prototype.scrollIntoView = () => undefined;
+}
+
 // Rotas carregadas sob demanda (lazy) podem levar mais de 1s sob carga da suíte completa.
 configure({ asyncUtilTimeout: 4000 });
 

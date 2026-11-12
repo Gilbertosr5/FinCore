@@ -54,9 +54,27 @@ const loadDashboardPage = () =>
     Component: m.DashboardPage,
   }));
 
+const loadTransactionsPage = () =>
+  import('@/features/transactions/presentation/pages/TransactionsPage').then((m) => ({
+    Component: m.TransactionsPage,
+  }));
+
+const loadAccountsPage = () =>
+  import('@/features/accounts/presentation/pages/AccountsPage').then((m) => ({
+    Component: m.AccountsPage,
+  }));
+
+const loadAccountStatementPage = () =>
+  import('@/features/accounts/presentation/pages/AccountStatementPage').then((m) => ({
+    Component: m.AccountStatementPage,
+  }));
+
 /** Módulos já entregues (rota real); os demais exibem placeholder com a fase prevista. */
 const deliveredModuleRoutes: RouteObject[] = [
   { path: ROUTES.dashboard, lazy: loadDashboardPage },
+  { path: ROUTES.transactions, lazy: loadTransactionsPage },
+  { path: ROUTES.accounts, lazy: loadAccountsPage },
+  { path: `${ROUTES.accounts}/:accountId`, lazy: loadAccountStatementPage },
   { path: ROUTES.settings, lazy: loadSettingsPage },
 ];
 

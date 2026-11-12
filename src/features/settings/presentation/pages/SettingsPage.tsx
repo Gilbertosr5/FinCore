@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { ROUTES } from '@/constants/routes';
 import { ChangePasswordForm, getUserInitials, useCurrentUser, useLogout } from '@/features/auth';
+import { CategoriesManager } from '@/features/transactions';
 
 import { AppearanceSettings } from '../components/AppearanceSettings';
 import { DemoDataSettings } from '../components/DemoDataSettings';
@@ -14,7 +15,6 @@ import { useDemoDataManager } from '../context/demo-data-context';
 
 const UPCOMING = [
   'Moeda principal, formato de data e fuso horário',
-  'Categorias personalizadas',
   'Preferências de notificações',
   'Exportação dos dados e exclusão da conta (requer backend)',
   'Histórico de sessões (requer backend)',
@@ -49,6 +49,13 @@ export function SettingsPage() {
             </dl>
           </div>
         )}
+      </SettingsSection>
+
+      <SettingsSection
+        title="Categorias"
+        description="Categorias de receitas e despesas usadas nos lançamentos, orçamentos e relatórios."
+      >
+        <CategoriesManager />
       </SettingsSection>
 
       <SettingsSection title="Aparência" description="Escolha o tema da interface.">

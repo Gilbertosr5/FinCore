@@ -7,6 +7,11 @@ import { ApiBudgetRepository, DemoBudgetRepository } from '@/features/budgets';
 import { ApiCreditCardRepository, DemoCreditCardRepository } from '@/features/credit-cards';
 import type { DashboardRepositories } from '@/features/dashboard';
 import { ApiGoalRepository, DemoGoalRepository } from '@/features/goals';
+import {
+  ApiAuditLogRepository,
+  DemoAuditLogRepository,
+  type AuditLogRepository,
+} from '@/features/history';
 import { ApiInvestmentRepository, DemoInvestmentRepository } from '@/features/investments';
 import {
   ApiCategoryRepository,
@@ -17,7 +22,9 @@ import {
 import type { IsoDate } from '@/lib/dates';
 import { createDemoDataStore, type DemoDataStore } from '@/services/storage/demo-data-store';
 
-export type AppRepositories = DashboardRepositories;
+export interface AppRepositories extends DashboardRepositories {
+  audit: AuditLogRepository;
+}
 
 export interface DataLayer {
   repositories: AppRepositories;
@@ -53,6 +60,7 @@ export function createDataLayer(options: CreateDataLayerOptions): DataLayer {
         budgets: new ApiBudgetRepository(http),
         goals: new ApiGoalRepository(http),
         investments: new ApiInvestmentRepository(http),
+        audit: new ApiAuditLogRepository(http),
       },
     };
   }
@@ -72,6 +80,7 @@ export function createDataLayer(options: CreateDataLayerOptions): DataLayer {
       budgets: new DemoBudgetRepository(store),
       goals: new DemoGoalRepository(store),
       investments: new DemoInvestmentRepository(store),
+      audit: new DemoAuditLogRepository(store),
     },
   };
 }

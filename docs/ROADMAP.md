@@ -9,15 +9,15 @@
 > "Iniciar Fase 4". Ao fim de cada fase: `npm run check`, `npm run build`,
 > `npm run test:e2e`, verificação no navegador e atualização do `PROJECT_STATUS.md`.
 
-## Estado atual (06/11/2026)
+## Estado atual (11/11/2026)
 
 | Fase | Descrição               | Status     |
 | ---- | ----------------------- | ---------- |
 | 1    | Fundação arquitetural   | ✅         |
 | 2    | Autenticação e layout   | ✅         |
 | 3    | Dashboard               | ✅         |
-| 4    | Gestão financeira       | ⏳ próxima |
-| 5    | Cartões e orçamentos    | —          |
+| 4    | Gestão financeira       | ✅         |
+| 5    | Cartões e orçamentos    | ⏳ próxima |
 | 6    | Metas e planejamento    | —          |
 | 7    | Investimentos           | —          |
 | 8    | Calendário e relatórios | —          |
@@ -25,9 +25,12 @@
 
 Já existem (e devem ser reutilizados, não reescritos): domínio e regras de
 contabilização de contas, transações, cartões/faturas, orçamentos, metas e
-investimentos (ADR 0007); repositórios **somente leitura** `Demo*` (IndexedDB) e
-`Api*` (REST) por feature (ADR 0008); seed de demonstração; `Money`, `IsoDate`,
-`MonthKey`; componentes de UI, gráficos e formulários.
+investimentos (ADR 0007); repositórios `Demo*` (IndexedDB) e `Api*` (REST) por
+feature (ADR 0008) — com **escrita** já implementada para lançamentos, recorrências,
+contas e categorias (Fase 4, ADR 0009) e somente leitura para cartões, orçamentos,
+metas e investimentos; histórico de alterações (feature `history`); seed de
+demonstração; `Money`, `IsoDate`, `MonthKey`; componentes de UI (select, checkbox,
+tabela, diálogos de confirmação, paginação, campo monetário), gráficos e formulários.
 
 ---
 

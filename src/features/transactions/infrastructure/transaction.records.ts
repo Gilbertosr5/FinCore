@@ -9,6 +9,7 @@ import {
 } from '@/lib/schemas/record-fields';
 
 import type { Category } from '../domain/entities/category';
+import type { Recurrence } from '../domain/entities/recurrence';
 import type { Transaction } from '../domain/entities/transaction';
 
 export const categoryRecordSchema = z
@@ -77,4 +78,47 @@ export const transactionRecordSchema = z
 
 export function transactionToRecord(transaction: Transaction) {
   return { ...transaction, amount: transaction.amount.toString() };
+}
+
+export const recurrenceRecordSchema = z
+  .object({
+    id: idField,
+    frequency: z.enum([
+      'daily',
+      'weekly',
+      'biweekly',
+      'monthly',
+      'bimonthly',
+      'quarterly',
+      'semiannual',
+      'yearly',
+    ]),
+    startDate: isoDateField,
+    endDate: isoDateField.nullish().transform((value) => value ?? null),
+    template: z.object({
+      kind: z.enum(['income', 'expense']),
+      description: z.string().min(1),
+      amount: moneyField,
+      accountId: idField,
+      categoryId: idField.nullish().transform((value) => value ?? null),
+      tags: z.array(z.string()).default([]),
+      notes: nullableString,
+    }),
+    excludedDates: z.array(isoDateField).default([]),
+  })
+  .refine(
+    (record) => record.endDate === null || record.endDate >= record.startDate,
+    'A data final deve ser posterior à inicial.',
+  )
+  .transform((record): Recurrence => record);
+
+export function recurrenceToRecord(recurrence: Recurrence) {
+  return {
+    ...recurrence,
+    template: { ...recurrence.template, amount: recurrence.template.amount.toString() },
+  };
+}
+
+export function categoryToRecord(category: Category) {
+  return { ...category };
 }

@@ -108,3 +108,62 @@ Regras de contabilização que o backend deve respeitar:
 - `amount` é sempre positivo.
 
 Faturas **não** são um recurso: são derivadas das compras e dos pagamentos.
+
+## Escrita (Fase 4)
+
+Identificadores são gerados no cliente (UUID v4) e as gravações são "cria ou
+substitui" — idempotentes. Regras de negócio: [ADR 0007](./adr/0007-regras-financeiras-e-contabilizacao.md)
+e [ADR 0009](./adr/0009-escrita-recorrencias-e-historico.md). O backend deve
+revalidar tudo (o cliente não é barreira de segurança).
+
+| Método | Caminho                            | Corpo                                                                                                      | Observações                                                                                                                                  |
+| ------ | ---------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/transactions/{id}`               | —                                                                                                          | `404` → inexistente                                                                                                                          |
+| POST   | `/transactions/batch`              | `{ upsert: Transação[], remove: string[], upsertRecurrences: Recorrência[], removeRecurrences: string[] }` | **Atômico** (tudo ou nada). Usado em transferências, parcelamentos, recorrências e mudanças de situação. `422` com `errors[]` para validação |
+| GET    | `/recurrences`                     | —                                                                                                          | Lista de recorrências                                                                                                                        |
+| PUT    | `/accounts/{id}`                   | Conta                                                                                                      | Cria ou substitui (inclui `archived`)                                                                                                        |
+| GET    | `/accounts/{id}`                   | —                                                                                                          | `404` → inexistente                                                                                                                          |
+| PUT    | `/categories/{id}`                 | Categoria                                                                                                  | Nome único por tipo → `409`                                                                                                                  |
+| DELETE | `/categories/{id}`                 | —                                                                                                          | `409` se houver uso (lançamentos, recorrências, compras, orçamentos)                                                                         |
+| GET    | `/audit-log?entityType=&entityId=` | —                                                                                                          | Histórico registrado pelo backend na mesma transação da alteração                                                                            |
+
+### Recorrência
+
+```json
+{
+  "id": "4f0c…",
+  "frequency": "monthly",
+  "startDate": "2026-01-10",
+  "endDate": null,
+  "template": {
+    "kind": "expense",
+    "description": "Aluguel",
+    "amount": "2200.00",
+    "accountId": "acc-1",
+    "categoryId": "cat-moradia",
+    "tags": [],
+    "notes": null
+  },
+  "excludedDates": ["2026-03-10"]
+}
+```
+
+`frequency`: `daily` | `weekly` | `biweekly` (15 dias) | `monthly` | `bimonthly` |
+`quarterly` | `semiannual` | `yearly`. Ocorrências usam o id
+`${recurrenceId}_${YYYY-MM-DD}`; o backend pode materializá-las por conta própria
+desde que respeite esse formato (evita duplicidade com o cliente).
+
+### Histórico (`AuditEntry`)
+
+```json
+{
+  "id": "…",
+  "entityType": "transaction",
+  "entityId": "tx-123",
+  "action": "paid",
+  "at": "2026-11-11T14:30:00-03:00",
+  "summary": "Pago em 11/11/2026."
+}
+```
+
+`action`: `created` | `updated` | `deleted` | `cancelled` | `paid` | `unpaid` | `archived` | `restored`.

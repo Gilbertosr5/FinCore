@@ -35,3 +35,8 @@ export const AUTH_ROUTE_PATHS: readonly string[] = [
   ROUTES.sessionExpired,
   ROUTES.unauthorized,
 ];
+
+/** Caminho do extrato de uma conta. */
+export function accountStatementPath(accountId: string): string {
+  return `${ROUTES.accounts}/${encodeURIComponent(accountId)}`;
+}

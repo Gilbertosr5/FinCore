@@ -1,9 +1,8 @@
 import type { Account } from '../entities/account';
 
-/**
- * Contrato de leitura de contas. Operações de escrita (criar, editar, arquivar)
- * entram na Fase 4, junto com as telas de gestão.
- */
 export interface AccountRepository {
   findAll(): Promise<Account[]>;
+  findById(id: string): Promise<Account | null>;
+  /** Cria ou substitui a conta (id gerado no cliente — operação idempotente). */
+  save(account: Account): Promise<void>;
 }

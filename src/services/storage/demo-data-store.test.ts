@@ -1,4 +1,9 @@
-import { createDemoDataStore, type DemoSeedData, type DemoSeedFactory } from './demo-data-store';
+import {
+  createDemoDataStore,
+  type DemoRecord,
+  type DemoSeedData,
+  type DemoSeedFactory,
+} from './demo-data-store';
 
 let counter = 0;
 
@@ -14,6 +19,8 @@ const emptySeed = (): DemoSeedData => ({
   assets: [],
   investmentMovements: [],
   assetValuations: [],
+  recurrences: [],
+  auditLog: [],
 });
 
 function factory(version: number) {
@@ -78,5 +85,30 @@ describe('armazenamento de demonstração (IndexedDB)', () => {
     const info = await store.reset();
     expect(info.referenceDate).toBe('2026-05-05');
     expect(await store.readAll('accounts')).toEqual([{ id: 'acc-1', name: 'Conta 2026-05-05' }]);
+  });
+
+  it('grava e remove registros atomicamente', async () => {
+    const store = createDemoDataStore({
+      databaseName: `store-test-${++counter}`,
+      seed: factory(1),
+      getReferenceDate: () => '2026-01-01',
+    });
+    await store.write({
+      put: { accounts: [{ id: 'acc-2', name: 'Nova' }], categories: [{ id: 'cat-1', name: 'X' }] },
+      remove: { accounts: ['acc-1'] },
+    });
+    expect(await store.readAll('accounts')).toEqual([{ id: 'acc-2', name: 'Nova' }]);
+    expect(await store.get('categories', 'cat-1')).toEqual({ id: 'cat-1', name: 'X' });
+
+    // Registro inválido (sem chave) faz a transação inteira falhar: nada é aplicado.
+    await expect(
+      store.write({
+        put: {
+          accounts: [{ id: 'acc-3', name: 'Não deve existir' }],
+          categories: [{ name: 'sem id' } as unknown as DemoRecord],
+        },
+      }),
+    ).rejects.toThrow();
+    expect(await store.get('accounts', 'acc-3')).toBeUndefined();
   });
 });

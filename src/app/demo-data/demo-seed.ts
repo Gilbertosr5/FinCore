@@ -23,7 +23,13 @@ import {
   type AssetValuation,
   type InvestmentMovement,
 } from '@/features/investments';
-import { transactionToRecord, type Category, type Transaction } from '@/features/transactions';
+import {
+  recurrenceToRecord,
+  transactionToRecord,
+  type Category,
+  type Recurrence,
+  type Transaction,
+} from '@/features/transactions';
 import {
   addMonthsToKey,
   asIsoDate,
@@ -57,7 +63,8 @@ import { SeededRandom } from './seeded-random';
  * - faturas são pagas com o total calculado pelas regras de cartão;
  * - aportes em metas acompanham transferências para a poupança.
  */
-export const DEMO_SEED_VERSION = 1;
+/** v2 (Fase 4): inclui recorrências, que geram automaticamente as próximas ocorrências. */
+export const DEMO_SEED_VERSION = 2;
 
 const ACC = {
   checking: 'acc-corrente',
@@ -264,6 +271,11 @@ export function createDemoSeed(referenceDate: string): DemoSeedData {
     });
   };
 
+  /** Gastos/receitas variáveis só existem se já aconteceram (o futuro é desconhecido). */
+  const addPastEntry = (...args: Parameters<typeof addEntry>) => {
+    if (args[4] <= today) addEntry(...args);
+  };
+
   const addTransfer = (
     from: string,
     to: string,
@@ -436,10 +448,10 @@ export function createDemoSeed(referenceDate: string): DemoSeedData {
       clothes: rng.money(150, 450),
     };
 
-    addEntry('expense', ACC.checking, 'Supermercado', draws.supermarket, day(13), CAT.food);
-    addEntry('expense', ACC.cash, 'Feira', draws.market, day(6), CAT.food);
+    addPastEntry('expense', ACC.checking, 'Supermercado', draws.supermarket, day(13), CAT.food);
+    addPastEntry('expense', ACC.cash, 'Feira', draws.market, day(6), CAT.food);
     [11, 19, 26].forEach((d, i) => {
-      addEntry(
+      addPastEntry(
         'expense',
         ACC.cash,
         'Padaria e café',
@@ -449,9 +461,9 @@ export function createDemoSeed(referenceDate: string): DemoSeedData {
       );
     });
     if (draws.pharmacyChance)
-      addEntry('expense', ACC.checking, 'Farmácia', draws.pharmacy, day(22), CAT.health);
+      addPastEntry('expense', ACC.checking, 'Farmácia', draws.pharmacy, day(22), CAT.health);
     if (draws.freelanceChance)
-      addEntry(
+      addPastEntry(
         'income',
         ACC.checking,
         'Projeto freelance',
@@ -460,7 +472,7 @@ export function createDemoSeed(referenceDate: string): DemoSeedData {
         CAT.freelance,
       );
     if (index > 0)
-      addEntry(
+      addPastEntry(
         'income',
         ACC.savings,
         'Rendimento da poupança',
@@ -469,11 +481,11 @@ export function createDemoSeed(referenceDate: string): DemoSeedData {
         CAT.yields,
       );
     if (monthNumber === 1)
-      addEntry('expense', ACC.checking, 'IPVA', brl('1850'), day(20), CAT.taxes);
+      addPastEntry('expense', ACC.checking, 'IPVA', brl('1850'), day(20), CAT.taxes);
     if (monthNumber === 12)
-      addEntry('income', ACC.checking, 'Bonificação anual', brl('4500'), day(20), CAT.bonus);
+      addPastEntry('income', ACC.checking, 'Bonificação anual', brl('4500'), day(20), CAT.bonus);
     if (index === 9) {
-      addEntry('expense', ACC.checking, 'Seguro viagem', brl('189'), day(16), CAT.other, {
+      addPastEntry('expense', ACC.checking, 'Seguro viagem', brl('189'), day(16), CAT.other, {
         status: 'cancelled',
         notes: 'Cancelado: viagem adiada',
       });
@@ -710,6 +722,41 @@ export function createDemoSeed(referenceDate: string): DemoSeedData {
     },
   ];
 
+  const recurrence = (
+    id: string,
+    kind: 'income' | 'expense',
+    description: string,
+    amount: string,
+    day: number,
+    categoryId: string,
+  ): Recurrence => ({
+    id,
+    frequency: 'monthly',
+    startDate: dayOfMonth(firstMonth, day),
+    endDate: null,
+    template: {
+      kind,
+      description,
+      amount: brl(amount),
+      accountId: ACC.checking,
+      categoryId,
+      tags: [],
+      notes: null,
+    },
+    excludedDates: [],
+  });
+
+  // Mesmos ids usados nas ocorrências acima: a materialização não as duplica.
+  const recurrences: Recurrence[] = [
+    recurrence('rec-salario', 'income', 'Salário — Empresa Exemplo Ltda.', '8400', 5, CAT.salary),
+    recurrence('rec-aluguel', 'expense', 'Aluguel', '2200', 10, CAT.housing),
+    recurrence('rec-condominio', 'expense', 'Condomínio', '650', 10, CAT.housing),
+    recurrence('rec-saude', 'expense', 'Plano de saúde', '480', 8, CAT.health),
+    recurrence('rec-ingles', 'expense', 'Curso de inglês', '390', 12, CAT.education),
+    recurrence('rec-internet', 'expense', 'Internet fibra', '119.90', 20, CAT.housing),
+    recurrence('rec-energia', 'expense', 'Conta de energia (estimativa)', '230', 15, CAT.housing),
+  ];
+
   const records = <T>(items: readonly T[], map: (item: T) => object): DemoRecord[] =>
     items.map((item) => map(item) as DemoRecord);
 
@@ -725,6 +772,8 @@ export function createDemoSeed(referenceDate: string): DemoSeedData {
     assets: records(ASSETS, (item) => ({ ...item })),
     investmentMovements: records(movements, investmentMovementToRecord),
     assetValuations: records(valuations, assetValuationToRecord),
+    recurrences: records(recurrences, recurrenceToRecord),
+    auditLog: [],
   };
 }
 

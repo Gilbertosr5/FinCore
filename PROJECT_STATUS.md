@@ -1,6 +1,8 @@
 # FinCore — Status do Projeto
 
-_Última atualização: 06/11/2026 — Fase 3 concluída._
+_Última atualização: 11/11/2026 — Fase 4 concluída._
+
+> Para retomar em um novo chat, leia [`CONTINUAR.md`](./CONTINUAR.md). Pendências consolidadas: [`PENDENCIAS.md`](./PENDENCIAS.md).
 
 ## Fases
 
@@ -9,14 +11,111 @@ _Última atualização: 06/11/2026 — Fase 3 concluída._
 | 1    | Fundação arquitetural   | ✅ Concluída |
 | 2    | Autenticação e layout   | ✅ Concluída |
 | 3    | Dashboard               | ✅ Concluída |
-| 4    | Gestão financeira       | ⏳ Próxima   |
-| 5    | Cartões e orçamentos    | —            |
+| 4    | Gestão financeira       | ✅ Concluída |
+| 5    | Cartões e orçamentos    | ⏳ Próxima   |
 | 6    | Metas e planejamento    | —            |
 | 7    | Investimentos           | —            |
 | 8    | Calendário e relatórios | —            |
 | 9    | Finalização e qualidade | —            |
 
-## Fase 3 — Implementado
+## Fase 4 — Implementado
+
+Regras em [ADR 0009](./docs/adr/0009-escrita-recorrencias-e-historico.md).
+
+**Lançamentos (`/transacoes`)**
+
+- Criar receitas e despesas avulsas, **parceladas** (valor total dividido com
+  `Money.allocate`, mês a mês com ajuste de fim de mês) ou **recorrentes**
+  (diária, semanal, quinzenal, mensal, bimestral, trimestral, semestral, anual;
+  data final opcional).
+- Editar (em séries: "somente este" ou "este e os próximos pendentes"), duplicar,
+  marcar como pago/recebido (com data), desfazer pagamento, cancelar, reativar e
+  excluir (com confirmação e alcance em séries).
+- Transferências entre contas (duas pernas atômicas; datas futuras agendadas).
+- Filtros na URL: mês, tipo, situação, categoria, conta, busca sem acentos (descrição,
+  categoria, tags), ordenação por data/valor, paginação; totais do filtro.
+- Tabela no desktop, cartões no celular; detalhes com **histórico de alterações**.
+
+**Recorrências**
+
+- Entidade `Recurrence` + agenda; ocorrências materializadas até o fim do mês
+  seguinte por `RecurrenceScheduler` (idempotente, 1×/dia), executado antes de
+  listar lançamentos, contas e dashboard. Exceções e encerramento de séries.
+- Seed de demonstração v2 com as despesas fixas e o salário como recorrências.
+
+**Contas (`/contas`, `/contas/:id`)**
+
+- Saldo atual, a pagar/receber, saldo previsto, destaque de saldo negativo, total
+  das contas ativas; criar, editar, arquivar/restaurar; transferir; novo
+  lançamento na conta; **extrato** mensal com saldo inicial, saldo acumulado,
+  entradas, saídas, saldo final e pendentes.
+
+**Categorias** (Configurações): criar, editar, excluir (bloqueado se em uso por
+lançamentos, recorrências, compras ou orçamentos); nome único por tipo.
+
+**Infraestrutura**: escrita atômica no IndexedDB (`DemoDataStore.write`, schema
+Dexie v2 com `recurrences` e `auditLog`); `TransactionRepository.commit`
+(lote atômico), `AccountRepository.save`, `CategoryRepository.save/remove`,
+implementações Demo e Api; feature `history`; invalidação de cache centralizada
+(`invalidateFinancialData`); contrato REST de escrita em `docs/api-contract.md`.
+
+**UI**: `Select`, `Checkbox`, `Textarea`, `Table`, `MoneyInput`,
+`ConfirmDialog`, `Pagination`, `MonthNavigator`, `HistoryTimeline`.
+
+**Correções durante a fase**: rótulos de selects não associados ao campo
+(acessibilidade); seed gerava despesas variáveis futuras como pendentes;
+capitalização "Novembro De 2026".
+
+## Testes executados (Fase 4)
+
+| Verificação                     | Resultado                                                              |
+| ------------------------------- | ---------------------------------------------------------------------- |
+| `npm run typecheck`             | ✅ sem erros                                                           |
+| `npm run lint`                  | ✅ 0 erros, 0 avisos                                                   |
+| `npm run format:check`          | ✅                                                                     |
+| `npm test`                      | ✅ 31 arquivos, 354 testes                                             |
+| `npm run test:e2e`              | ✅ 23 aprovados, 1 ignorado de propósito (atalho de teclado no mobile) |
+| `npm run build`                 | ✅                                                                     |
+| Verificação manual no navegador | ✅ criar parcelado, busca, contas, extrato (desktop e celular)         |
+
+Novas suítes: `ledger-commands`, `queries-and-categories`, `account-use-cases`,
+`demo-data-store` (escrita atômica), `tests/integration/ledger`, `tests/e2e/ledger.spec`.
+
+## Funcionalidades pendentes
+
+- **Fase 5 — Cartões e orçamentos:** CRUD de cartões, compras (avulsas e
+  parceladas), faturas (tela), pagamento de fatura (gera `card_payment`),
+  histórico de pagamentos, orçamentos (CRUD, mensal/anual, planejado × realizado,
+  histórico) e alimentar a central de notificações com os alertas.
+- Anexos em lançamentos (depende de armazenamento de arquivos no backend).
+- Configurações: moeda, formato de data, fuso, notificações, exportação/exclusão.
+
+## Problemas conhecidos
+
+- Nenhum problema crítico.
+- O seed é relativo à data em que foi gerado; as recorrências avançam sozinhas,
+  mas gastos variáveis só existem até a data de geração — use Configurações →
+  Restaurar dados para um cenário atualizado.
+- Bundle inicial ~150 kB gzip; avaliar carregar o seed sob demanda na Fase 9.
+- `npm audit`: vulnerabilidades moderadas apenas em dependências de
+  desenvolvimento (plugins de ESLint); produção: 0.
+- Investimentos em versão inicial (ver ADR 0007).
+
+## Decisões arquiteturais
+
+- ADR 0001–0008 (Fases 1–3).
+- **ADR 0009** — ids no cliente (gravações idempotentes), lote atômico do livro de
+  lançamentos, transferências, parcelas, recorrências materializadas, situações,
+  contas, categorias e histórico de alterações.
+
+## Próximas etapas
+
+Iniciar a **Fase 5 — Cartões e orçamentos** (requisitos em
+[`docs/ROADMAP.md`](./docs/ROADMAP.md)).
+
+## Histórico — Fase 3
+
+### Fase 3 — Implementado
 
 **Domínio financeiro (base para as Fases 4–7)** — regras em ADR 0007
 
@@ -63,58 +162,3 @@ _Última atualização: 06/11/2026 — Fase 3 concluída._
 - Componentes `StatCard`, `ChartCard`, `ChartLegend`, `ChartTooltipContent`,
   `ProgressBar`.
 - Configurações: seção "Ambiente de demonstração" com restauração confirmada.
-
-## Testes executados (Fase 3)
-
-| Verificação                     | Resultado                                                              |
-| ------------------------------- | ---------------------------------------------------------------------- |
-| `npm run typecheck`             | ✅ sem erros                                                           |
-| `npm run lint`                  | ✅ 0 erros, 0 avisos                                                   |
-| `npm run format:check`          | ✅                                                                     |
-| `npm test`                      | ✅ 27 arquivos, 302 testes                                             |
-| `npm run test:e2e`              | ✅ 19 aprovados, 1 ignorado de propósito (atalho de teclado no mobile) |
-| `npm run build`                 | ✅                                                                     |
-| Verificação manual no navegador | ✅ desktop, celular, tema claro e escuro                               |
-
-Novas suítes: `transaction-effects`, `account-balance`, `credit-cards`,
-`budget-usage`, `goal-progress`, `portfolio`, `period`, `dashboard-overview`
-(cenário com valores calculados à mão), `use-period-selection`, `demo-seed`,
-`demo-data-store`, `tests/integration/dashboard`, `tests/e2e/dashboard.spec`.
-
-**Bug encontrado pelos testes e corrigido:** o alerta de orçamento usava o
-percentual arredondado — R$ 639,99 de R$ 800 (79,998%) disparava o alerta de 80%.
-
-## Funcionalidades pendentes
-
-- **Fase 4 — Gestão financeira:** CRUD de lançamentos (receitas, despesas,
-  transferências, duplicar, cancelar, marcar pago/recebido), recorrências,
-  parcelamentos em conta, categorias personalizadas, contas (criar, editar,
-  arquivar, extrato), escrita nos repositórios e invalidação de cache do dashboard.
-- Notificações: alimentar a central com os alertas do dashboard.
-- Configurações: moeda, formato de data, fuso, categorias, exportação/exclusão.
-
-## Problemas conhecidos
-
-- Nenhum problema crítico.
-- O seed é relativo à data em que foi gerado: em um novo mês, use
-  **Configurações → Restaurar dados** para que o "mês atual" tenha dados.
-- Bundle inicial ~148 kB gzip (inclui Dexie, Zod e o gerador de seed). Avaliar
-  carregar o seed sob demanda na Fase 9.
-- `npm audit`: 8 vulnerabilidades moderadas apenas em dependências de
-  desenvolvimento (minimatch via plugins de ESLint); produção: 0.
-- Cálculo de investimentos é uma versão inicial (sem custo médio, TWR/MWR, IR,
-  inflação) — limitações documentadas no ADR 0007 e sinalizadas na interface.
-
-## Decisões arquiteturais
-
-- ADR 0001–0006 (Fases 1–2).
-- **ADR 0007** — modelo financeiro: tipos de movimentação, competência, cartões e
-  faturas derivadas, orçamentos, metas, investimentos (e limitações), patrimônio,
-  cores de gráficos.
-- **ADR 0008** — repositórios por feature, IndexedDB de demonstração e seed.
-- Contrato dos recursos de leitura em `docs/api-contract.md`.
-
-## Próximas etapas
-
-Iniciar a **Fase 4 — Gestão financeira**. Requisitos completos das Fases 4 a 9 em
-[`docs/ROADMAP.md`](./docs/ROADMAP.md).

@@ -14,6 +14,8 @@ export default mergeConfig(
       // Fuso fixo garante que testes de data sejam determinísticos em qualquer máquina/CI.
       env: { TZ: 'America/Sao_Paulo' },
       restoreMocks: true,
+      // Fluxos de integração renderizam a aplicação inteira (rotas lazy, IndexedDB simulado).
+      testTimeout: 20_000,
     },
   }),
 );
