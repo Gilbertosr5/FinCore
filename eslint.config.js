@@ -49,6 +49,8 @@ export default tseslint.config(
       'react/prop-types': 'off',
       'react/jsx-no-useless-fragment': 'error',
       'react/self-closing-comp': 'error',
+      // Áreas roláveis (role="region" com nome) precisam ser focáveis pelo teclado (WCAG 2.1.1).
+      'jsx-a11y/no-noninteractive-tabindex': ['error', { tags: [], roles: ['tabpanel', 'region'] }],
       'react/jsx-boolean-value': ['error', 'never'],
 
       // TypeScript

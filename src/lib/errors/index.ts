@@ -1,2 +1,7 @@
 export { DomainError, isDomainError } from './domain-error';
-export { getErrorMessage, GENERIC_ERROR_MESSAGE } from './error-message';
+export {
+  CHUNK_LOAD_MESSAGE,
+  getErrorMessage,
+  GENERIC_ERROR_MESSAGE,
+  isChunkLoadError,
+} from './error-message';

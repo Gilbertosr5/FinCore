@@ -9,19 +9,19 @@
 > "Iniciar a próxima fase pendente". Ao fim de cada fase: `npm run check`, `npm run build`,
 > `npm run test:e2e`, verificação no navegador e atualização do `PROJECT_STATUS.md`.
 
-## Estado atual (11/11/2026 — após a Fase 8)
+## Estado atual (12/11/2026 — todas as fases concluídas)
 
-| Fase | Descrição               | Status     |
-| ---- | ----------------------- | ---------- |
-| 1    | Fundação arquitetural   | ✅         |
-| 2    | Autenticação e layout   | ✅         |
-| 3    | Dashboard               | ✅         |
-| 4    | Gestão financeira       | ✅         |
-| 5    | Cartões e orçamentos    | ✅         |
-| 6    | Metas e planejamento    | ✅         |
-| 7    | Investimentos           | ✅         |
-| 8    | Calendário e relatórios | ✅         |
-| 9    | Finalização e qualidade | ⏳ próxima |
+| Fase | Descrição               | Status |
+| ---- | ----------------------- | ------ |
+| 1    | Fundação arquitetural   | ✅     |
+| 2    | Autenticação e layout   | ✅     |
+| 3    | Dashboard               | ✅     |
+| 4    | Gestão financeira       | ✅     |
+| 5    | Cartões e orçamentos    | ✅     |
+| 6    | Metas e planejamento    | ✅     |
+| 7    | Investimentos           | ✅     |
+| 8    | Calendário e relatórios | ✅     |
+| 9    | Finalização e qualidade | ✅     |
 
 Já existem (e devem ser reutilizados, não reescritos): domínio e regras de
 contabilização de contas, transações, cartões/faturas, orçamentos, metas e
@@ -219,9 +219,10 @@ de produção.
 **Critério de conclusão:** aplicação compilando, testes aprovados e
 funcionalidades documentadas.
 
-Pendências já anotadas: reduzir o bundle inicial (carregar o seed sob demanda);
-revisar vulnerabilidades de dependências de desenvolvimento; completar
-Configurações (abaixo).
+**Entregue em 12/11/2026** (ADR 0014): auditoria axe em todas as rotas, contraste dos
+tokens, seed e IndexedDB sob demanda, CSP no build, mensagens de erro de armazenamento
+e de carregamento, busca global com entidades e exportação dos dados. O que sobrou
+está em [`PENDENCIAS.md`](../PENDENCIAS.md).
 
 ---
 
@@ -231,7 +232,7 @@ Perfil: nome, e-mail, dados pessoais não sensíveis, preferências de exibiçã
 Preferências: tema (feito), moeda principal, formato de data, fuso horário,
 notificações, categorias personalizadas.
 Segurança: alterar senha (feito), encerrar sessão (feito), histórico de sessões
-(quando suportado), exportação dos dados, exclusão da conta (via backend).
+(quando suportado), exportação dos dados (feito — JSON), exclusão da conta (via backend).
 
 ## Requisitos transversais (valem para todas as fases)
 

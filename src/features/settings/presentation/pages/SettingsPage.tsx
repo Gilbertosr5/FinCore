@@ -9,14 +9,16 @@ import { ChangePasswordForm, getUserInitials, useCurrentUser, useLogout } from '
 import { CategoriesManager } from '@/features/transactions';
 
 import { AppearanceSettings } from '../components/AppearanceSettings';
+import { DataExportSettings } from '../components/DataExportSettings';
 import { DemoDataSettings } from '../components/DemoDataSettings';
 import { SettingsSection } from '../components/SettingsSection';
+import { useDataExporter } from '../context/data-export-context';
 import { useDemoDataManager } from '../context/demo-data-context';
 
 const UPCOMING = [
   'Moeda principal, formato de data e fuso horário',
   'Preferências de notificações',
-  'Exportação dos dados e exclusão da conta (requer backend)',
+  'Exclusão da conta (requer backend)',
   'Histórico de sessões (requer backend)',
 ];
 
@@ -25,6 +27,8 @@ export function SettingsPage() {
   const logout = useLogout();
   const navigate = useNavigate();
   const demoData = useDemoDataManager();
+  const exporter = useDataExporter();
+  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -96,6 +100,15 @@ export function SettingsPage() {
           </div>
         </div>
       </SettingsSection>
+
+      {exporter && (
+        <SettingsSection
+          title="Seus dados"
+          description="Leve seus dados com você: backup completo em formato aberto."
+        >
+          <DataExportSettings exporter={exporter} today={today} />
+        </SettingsSection>
+      )}
 
       {demoData && (
         <SettingsSection

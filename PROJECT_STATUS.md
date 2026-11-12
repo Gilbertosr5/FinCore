@@ -1,6 +1,6 @@
 # FinCore — Status do Projeto
 
-_Última atualização: 11/11/2026 — Fase 8 concluída._
+_Última atualização: 12/11/2026 — Fase 9 concluída (todas as fases entregues)._
 
 > Para retomar em um novo chat, leia [`CONTINUAR.md`](./CONTINUAR.md). Pendências consolidadas: [`PENDENCIAS.md`](./PENDENCIAS.md).
 
@@ -16,9 +16,109 @@ _Última atualização: 11/11/2026 — Fase 8 concluída._
 | 6    | Metas e planejamento    | ✅ Concluída |
 | 7    | Investimentos           | ✅ Concluída |
 | 8    | Calendário e relatórios | ✅ Concluída |
-| 9    | Finalização e qualidade | ⏳ Próxima   |
+| 9    | Finalização e qualidade | ✅ Concluída |
 
-## Fase 8 — Implementado
+## Fase 9 — Implementado
+
+Decisões em [ADR 0014](./docs/adr/0014-qualidade-acessibilidade-performance-seguranca.md);
+segurança do front e headers do servidor em [`docs/seguranca.md`](./docs/seguranca.md).
+
+**Acessibilidade**
+
+- Auditoria axe-core (WCAG 2.1 A/AA) no E2E: rotas públicas e 15 rotas autenticadas,
+  temas claro e escuro, desktop e celular — 0 violações.
+- Tokens de cor ajustados para contraste AA (primária, texto secundário, sucesso, atenção,
+  erro); no tema escuro a primária é violeta claro com texto escuro.
+- Tabelas largas viram região rolável nomeada e focável (teclado).
+
+**Performance**: gerador do seed e Dexie sob demanda — chunk `App` 339 kB → 231 kB
+(66 kB gzip); no modo API não são baixados.
+
+**Segurança**: CSP por meta tag no build (`build/csp-plugin.ts`; script de tema por hash,
+sem `'unsafe-inline'` em scripts; `connect-src` com a origem da API) e
+`Referrer-Policy`; `npm audit --omit=dev`: 0.
+
+**Tratamento de erros**: mensagens orientativas para cota/indisponibilidade/bloqueio do
+IndexedDB e para falha ao carregar módulos (tela "Atualização necessária").
+
+**Pendências fechadas**: busca global (Ctrl+K) com contas, cartões, metas, ativos,
+orçamentos e lançamentos recentes (feature `search`); exportação de todos os dados em
+JSON (Configurações → Seus dados).
+
+## Testes executados (Fase 9)
+
+| Verificação                     | Resultado                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------------ |
+| `npm run typecheck`             | ✅ sem erros                                                                   |
+| `npm run lint`                  | ✅ 0 erros, 0 avisos                                                           |
+| `npm run format:check`          | ✅                                                                             |
+| `npm test`                      | ✅ 48 arquivos, 517 testes                                                     |
+| `npm run test:e2e`              | ✅ 51 aprovados, 1 ignorado de propósito (atalho de teclado no mobile)         |
+| `npm run build`                 | ✅ `App` 230,8 kB (66,4 kB gzip); seed, Dexie e jsPDF sob demanda; CSP no HTML |
+| Verificação manual no navegador | ✅ dashboard (escuro), busca Ctrl+K, cartões (claro), celular                  |
+
+Novas suítes: `tests/e2e/accessibility.spec` (axe), `tests/e2e/security.spec` (CSP),
+`search-entities`, mensagens de erro de armazenamento/carregamento e testes de
+integração da busca e da exportação.
+
+## Funcionalidades pendentes
+
+- Todas as 9 fases do plano estão entregues; o que sobrou está em `PENDENCIAS.md`.
+- Anexos em lançamentos (depende de armazenamento de arquivos no backend).
+- Configurações: moeda, formato de data, fuso, notificações, exclusão da conta.
+- Detalhes em [`PENDENCIAS.md`](./PENDENCIAS.md).
+
+## Problemas conhecidos
+
+- Nenhum problema crítico.
+- O seed é relativo à data em que foi gerado; as recorrências avançam sozinhas,
+  mas gastos variáveis só existem até a data de geração — use Configurações →
+  Restaurar dados para um cenário atualizado.
+- CSP por `<meta>`: `frame-ancestors`, HSTS e demais headers precisam ser definidos
+  no servidor (`docs/seguranca.md`); estilos ainda exigem `'unsafe-inline'`.
+- `npm audit`: vulnerabilidades moderadas apenas em dependências de
+  desenvolvimento (plugins de ESLint); produção: 0.
+- Investimentos: retorno simples (não TWR/MWR), sem IR/come-cotas nem eventos
+  corporativos; valores dependem de avaliações manuais até haver cotações (ADR 0012).
+- Projeções do planejamento são simplificadas (sem sazonalidade, inflação ou data
+  exata de pagamento das faturas — ADR 0011) e sempre rotuladas como estimativa.
+- Histórico de orçamentos compara períodos passados com o limite **atual**; alterar
+  os dias de fechamento de um cartão recalcula todas as faturas (ADR 0010).
+
+## Decisões arquiteturais
+
+- ADR 0001–0008 (Fases 1–3).
+- **ADR 0009** — ids no cliente (gravações idempotentes), lote atômico do livro de
+  lançamentos, transferências, parcelas, recorrências materializadas, situações,
+  contas, categorias e histórico de alterações.
+- **ADR 0010** — faturas derivadas e fatura aberta pelo calendário, compra como
+  registro único, limite disponível, pagamento como `card_payment` (parcial,
+  antecipado, estorno), orçamentos (unicidade, consumo compartilhado, histórico) e
+  central de notificações.
+- **ADR 0011** — metas (progresso derivado, aporte com transferência opcional e
+  compensação, projeção pelo ritmo), planejamento sem gravação (fluxos por
+  competência, estimativa de variáveis, projeção de saldo, cenários, grande compra,
+  plano anual/mensal) e simulador de juros compostos.
+- **ADR 0012** — investimentos: custo médio e resultados realizados, valor atual
+  ajustado após a avaliação, movimentações com lançamento opcional na conta
+  (compensação), reavaliação sugerida e contrato de indicadores de mercado.
+- **ADR 0013** — calendário com eventos derivados, relatórios como tabela única
+  (tela = CSV = PDF), indicadores, CSV pt-BR com proteção contra fórmulas e PDF com
+  jsPDF sob demanda; lembretes apenas como contrato.
+- **ADR 0014** — auditoria axe e contraste dos tokens, tabelas roláveis acessíveis,
+  seed/Dexie sob demanda, CSP no build, mensagens de erro de armazenamento e
+  carregamento, busca global com entidades e exportação JSON.
+
+## Próximas etapas
+
+As 9 fases estão concluídas. Próximos passos sugeridos (detalhes em
+[`PENDENCIAS.md`](./PENDENCIAS.md)): validar todos os módulos contra o backend
+(`../fincore-api`, E2E no modo API), completar Configurações (moeda, formato de data,
+fuso) e preparar o deploy com os headers de `docs/seguranca.md`.
+
+## Histórico — Fase 8
+
+### Fase 8 — Implementado
 
 Regras em [ADR 0013](./docs/adr/0013-calendario-relatorios-e-exportacao.md).
 
@@ -53,7 +153,7 @@ repositórios), `lib/export` (CSV, PDF, download), `dayOfWeek`/`startOfWeek` em
 (espaço não separável, BOM, acentos combinantes) — trocados por `String.fromCharCode`
 e verificados por varredura; todos os módulos da navegação passaram a ter tela real.
 
-## Testes executados (Fase 8)
+### Testes executados (Fase 8)
 
 | Verificação                     | Resultado                                                                 |
 | ------------------------------- | ------------------------------------------------------------------------- |
@@ -69,56 +169,6 @@ Novas suítes: `calendar` (eventos e grade), `reports` (entradas, indicadores e
 relatórios com valores calculados à mão), `export` (CSV, nome de arquivo, PDF real),
 `report-export` (CSV/PDF = tabela), `tests/integration/calendar-reports`
 (inclui CSV baixado = tabela da tela), `tests/e2e/calendar-reports.spec` (downloads).
-
-## Funcionalidades pendentes
-
-- **Fase 9 — Finalização e qualidade** (requisitos em [`docs/ROADMAP.md`](./docs/ROADMAP.md)).
-- Anexos em lançamentos (depende de armazenamento de arquivos no backend).
-- Configurações: moeda, formato de data, fuso, notificações, exportação/exclusão.
-- Detalhes em [`PENDENCIAS.md`](./PENDENCIAS.md).
-
-## Problemas conhecidos
-
-- Nenhum problema crítico.
-- O seed é relativo à data em que foi gerado; as recorrências avançam sozinhas,
-  mas gastos variáveis só existem até a data de geração — use Configurações →
-  Restaurar dados para um cenário atualizado.
-- Bundle inicial: chunk `App` ~339 kB (102 kB gzip); jsPDF fica em chunks sob demanda + `index` ~255 kB (81 kB gzip) —
-  avaliar carregar o seed e o dashboard sob demanda na Fase 9.
-- `npm audit`: vulnerabilidades moderadas apenas em dependências de
-  desenvolvimento (plugins de ESLint); produção: 0.
-- Investimentos: retorno simples (não TWR/MWR), sem IR/come-cotas nem eventos
-  corporativos; valores dependem de avaliações manuais até haver cotações (ADR 0012).
-- Projeções do planejamento são simplificadas (sem sazonalidade, inflação ou data
-  exata de pagamento das faturas — ADR 0011) e sempre rotuladas como estimativa.
-- Histórico de orçamentos compara períodos passados com o limite **atual**; alterar
-  os dias de fechamento de um cartão recalcula todas as faturas (ADR 0010).
-
-## Decisões arquiteturais
-
-- ADR 0001–0008 (Fases 1–3).
-- **ADR 0009** — ids no cliente (gravações idempotentes), lote atômico do livro de
-  lançamentos, transferências, parcelas, recorrências materializadas, situações,
-  contas, categorias e histórico de alterações.
-- **ADR 0010** — faturas derivadas e fatura aberta pelo calendário, compra como
-  registro único, limite disponível, pagamento como `card_payment` (parcial,
-  antecipado, estorno), orçamentos (unicidade, consumo compartilhado, histórico) e
-  central de notificações.
-- **ADR 0011** — metas (progresso derivado, aporte com transferência opcional e
-  compensação, projeção pelo ritmo), planejamento sem gravação (fluxos por
-  competência, estimativa de variáveis, projeção de saldo, cenários, grande compra,
-  plano anual/mensal) e simulador de juros compostos.
-- **ADR 0012** — investimentos: custo médio e resultados realizados, valor atual
-  ajustado após a avaliação, movimentações com lançamento opcional na conta
-  (compensação), reavaliação sugerida e contrato de indicadores de mercado.
-- **ADR 0013** — calendário com eventos derivados, relatórios como tabela única
-  (tela = CSV = PDF), indicadores, CSV pt-BR com proteção contra fórmulas e PDF com
-  jsPDF sob demanda; lembretes apenas como contrato.
-
-## Próximas etapas
-
-Iniciar a **Fase 9 — Finalização e qualidade** (requisitos em
-[`docs/ROADMAP.md`](./docs/ROADMAP.md)).
 
 ## Histórico — Fase 7
 

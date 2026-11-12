@@ -1,7 +1,12 @@
 import { useState, type ReactNode } from 'react';
 
 import { createDataLayer, type DataLayer } from '@/app/composition/create-data-layer';
+import { exportUserData } from '@/app/composition/export-user-data';
 import { appConfig } from '@/app/config/app.config';
+import {
+  CommandSearchSourceContext,
+  type CommandSearchSource,
+} from '@/components/layout/command-search-source';
 import {
   AccountsServicesContext,
   createAccountUseCases,
@@ -44,7 +49,13 @@ import {
   ReportsServicesContext,
   type ReportsServices,
 } from '@/features/reports';
-import { DemoDataContext, type DemoDataManager } from '@/features/settings';
+import { SearchEntitiesUseCase } from '@/features/search';
+import {
+  DataExportContext,
+  DemoDataContext,
+  type DataExporter,
+  type DemoDataManager,
+} from '@/features/settings';
 import {
   createTransactionUseCases,
   TransactionsServicesContext,
@@ -142,6 +153,22 @@ function createServices(layer: DataLayer, today: () => IsoDate) {
     }),
     isDemoData: layer.demoStore !== null,
   };
+  const entitySearch = new SearchEntitiesUseCase({
+    accounts: repositories.accounts,
+    transactions: repositories.transactions,
+    cards: repositories.creditCards,
+    budgets: repositories.budgets,
+    goals: repositories.goals,
+    investments: repositories.investments,
+  });
+  const search: CommandSearchSource = { search: (term) => entitySearch.execute(term) };
+  const dataExport: DataExporter = {
+    exportAll: async () => {
+      const exported = await exportUserData(repositories, layer.demoStore ? 'demo' : 'api', now);
+      const records = Object.values(exported.data).reduce((total, list) => total + list.length, 0);
+      return { json: JSON.stringify(exported, null, 2), records };
+    },
+  };
   const goals: GoalsServices = {
     useCases: createGoalUseCases({
       ...ledgerContext,
@@ -199,6 +226,8 @@ function createServices(layer: DataLayer, today: () => IsoDate) {
     investments,
     calendar,
     reports,
+    search,
+    dataExport,
     planning,
     dashboard,
     history,
@@ -236,11 +265,15 @@ export function DataProvider({ children, dataLayer, today = defaultToday }: Data
                   <InvestmentsServicesContext.Provider value={services.investments}>
                     <CalendarServicesContext.Provider value={services.calendar}>
                       <ReportsServicesContext.Provider value={services.reports}>
-                        <HistoryServicesContext.Provider value={services.history}>
-                          <DemoDataContext.Provider value={services.demo}>
-                            {children}
-                          </DemoDataContext.Provider>
-                        </HistoryServicesContext.Provider>
+                        <CommandSearchSourceContext.Provider value={services.search}>
+                          <DataExportContext.Provider value={services.dataExport}>
+                            <HistoryServicesContext.Provider value={services.history}>
+                              <DemoDataContext.Provider value={services.demo}>
+                                {children}
+                              </DemoDataContext.Provider>
+                            </HistoryServicesContext.Provider>
+                          </DataExportContext.Provider>
+                        </CommandSearchSourceContext.Provider>
                       </ReportsServicesContext.Provider>
                     </CalendarServicesContext.Provider>
                   </InvestmentsServicesContext.Provider>

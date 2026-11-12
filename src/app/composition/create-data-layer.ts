@@ -1,7 +1,7 @@
 import type { AxiosInstance } from 'axios';
 
 import type { DataSource } from '@/app/config/app.config';
-import { demoSeedFactory } from '@/app/demo-data/demo-seed';
+import { DEMO_SEED_VERSION } from '@/app/demo-data/demo-seed-version';
 import { ApiAccountRepository, DemoAccountRepository } from '@/features/accounts';
 import { ApiBudgetRepository, DemoBudgetRepository } from '@/features/budgets';
 import { ApiCreditCardRepository, DemoCreditCardRepository } from '@/features/credit-cards';
@@ -26,7 +26,11 @@ import {
   DemoTransactionRepository,
 } from '@/features/transactions';
 import type { IsoDate } from '@/lib/dates';
-import { createDemoDataStore, type DemoDataStore } from '@/services/storage/demo-data-store';
+import {
+  createDemoDataStore,
+  type DemoDataStore,
+  type DemoSeedFactory,
+} from '@/services/storage/demo-data-store';
 
 export interface AppRepositories extends DashboardRepositories {
   audit: AuditLogRepository;
@@ -41,6 +45,16 @@ export interface DataLayer {
 }
 
 export const DEMO_DATABASE_NAME = 'fincore-demo';
+
+/**
+ * Gerador de dados de demonstração carregado sob demanda: só é baixado quando o
+ * banco local precisa ser criado ou restaurado (fora do carregamento inicial).
+ */
+const lazyDemoSeed: DemoSeedFactory = {
+  version: DEMO_SEED_VERSION,
+  create: async (referenceDate) =>
+    (await import('@/app/demo-data/demo-seed')).createDemoSeed(referenceDate),
+};
 
 interface CreateDataLayerOptions {
   source: DataSource;
@@ -76,7 +90,7 @@ export function createDataLayer(options: CreateDataLayerOptions): DataLayer {
 
   const store = createDemoDataStore({
     databaseName: options.databaseName ?? DEMO_DATABASE_NAME,
-    seed: demoSeedFactory,
+    seed: lazyDemoSeed,
     getReferenceDate: options.today,
   });
   return {

@@ -124,7 +124,7 @@ describe('estrutura da aplicação (autenticado)', () => {
     await mainNav();
 
     await user.keyboard('{Control>}k{/Control}');
-    const input = await screen.findByRole('combobox', { name: 'Buscar módulos' });
+    const input = await screen.findByRole('combobox', { name: 'Buscar' });
     await user.type(input, 'cartoes');
 
     expect(screen.getAllByRole('option')).toHaveLength(1);
@@ -134,6 +134,38 @@ describe('estrutura da aplicação (autenticado)', () => {
       expect(router.state.location.pathname).toBe('/cartoes');
     });
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+  });
+
+  it('busca global encontra lançamentos e abre a lista filtrada', async () => {
+    const user = userEvent.setup();
+    const { router } = await renderApp('/dashboard', { authenticated: true });
+    await mainNav();
+    await user.keyboard('{Control>}k{/Control}');
+    await user.type(await screen.findByRole('combobox', { name: 'Buscar' }), 'aluguel');
+    const options = await screen.findAllByRole('option', { name: /^Aluguel/ }, { timeout: 5000 });
+    const option = options.find((item) => item.textContent.includes('Lançamento'));
+    if (!option) throw new Error('lançamento não encontrado na busca');
+    await user.click(option);
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/transacoes');
+    });
+    expect(router.state.location.search).toContain('q=Aluguel');
+  });
+
+  it('exporta todos os dados em JSON pelas Configurações', async () => {
+    const user = userEvent.setup();
+    const created: Blob[] = [];
+    const createObjectURL = vi.fn((blob: Blob) => {
+      created.push(blob);
+      return 'blob:teste';
+    });
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }));
+    await renderApp('/configuracoes', { authenticated: true });
+    await user.click(await screen.findByRole('button', { name: 'Exportar meus dados' }));
+    expect(await screen.findByText(/Exportação concluída/)).toBeInTheDocument();
+    const [blob] = created;
+    expect(blob?.type).toBe('application/json');
+    vi.unstubAllGlobals();
   });
 
   it('central de notificações lista os alertas financeiros com link para o módulo', async () => {

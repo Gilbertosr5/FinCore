@@ -27,7 +27,7 @@ sem reestruturação.
 | 6    | Metas e planejamento financeiro                                              | ✅ Concluída |
 | 7    | Investimentos                                                                | ✅ Concluída |
 | 8    | Calendário e relatórios (PDF/CSV)                                            | ✅ Concluída |
-| 9    | Qualidade final: acessibilidade, performance, segurança                      | ⏳           |
+| 9    | Qualidade final: acessibilidade, performance, segurança                      | ✅ Concluída |
 
 ## Stack tecnológica
 
@@ -36,7 +36,7 @@ Zustand 5 · React Hook Form + Zod 4 · Tailwind CSS 4 · shadcn/ui (Radix) ·
 Lucide · Axios · date-fns 4 · decimal.js · Recharts 3 · Dexie 4 (IndexedDB) ·
 Vitest 5 + Testing Library · Playwright · ESLint 9 + Prettier.
 
-Biblioteca de PDF entra na Fase 8.
+PDF com jsPDF (sob demanda) · auditoria de acessibilidade com axe-core no Playwright.
 Justificativas de versão em [ADR 0002](./docs/adr/0002-stack-e-versoes.md).
 
 ## Arquitetura
@@ -272,6 +272,20 @@ Em produção, `VITE_AUTH_ADAPTER=dev` é bloqueado (exceto com `VITE_DEMO_MODE=
   a partir da mesma tabela exibida.
 - Regras: [ADR 0013](./docs/adr/0013-calendario-relatorios-e-exportacao.md).
 
+## Qualidade, busca e seus dados (Fase 9)
+
+- **Acessibilidade**: auditoria axe (WCAG 2.1 AA) automática em todas as rotas, temas
+  claro e escuro, desktop e celular; tokens de cor com contraste AA; tabelas largas
+  roláveis pelo teclado.
+- **Busca global (Ctrl+K)**: módulos, contas, cartões, metas, ativos, orçamentos e
+  lançamentos recentes.
+- **Exportar meus dados** (Configurações → Seus dados): JSON com todos os registros.
+- **Segurança**: CSP no build de produção; headers recomendados em
+  [`docs/seguranca.md`](./docs/seguranca.md).
+- **Desempenho**: dados de demonstração e IndexedDB carregados sob demanda (chunk
+  inicial `App` de 66 kB gzip).
+- Regras: [ADR 0014](./docs/adr/0014-qualidade-acessibilidade-performance-seguranca.md).
+
 ## Dashboard
 
 Indicadores (patrimônio líquido, saldo, receitas, despesas, resultado, taxa de
@@ -348,3 +362,4 @@ documentados nas respectivas fases.
 - [0011 — Metas, aportes, planejamento e projeções](./docs/adr/0011-metas-e-planejamento.md)
 - [0012 — Investimentos: custo médio, movimentações com conta e indicadores](./docs/adr/0012-investimentos-custo-medio-e-indicadores.md)
 - [0013 — Calendário financeiro, relatórios e exportação CSV/PDF](./docs/adr/0013-calendario-relatorios-e-exportacao.md)
+- [0014 — Qualidade final: acessibilidade, performance, segurança e erros](./docs/adr/0014-qualidade-acessibilidade-performance-seguranca.md)

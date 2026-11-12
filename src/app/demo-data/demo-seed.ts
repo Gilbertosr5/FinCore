@@ -46,6 +46,7 @@ import {
 import { Money } from '@/lib/money';
 import type { DemoRecord, DemoSeedData, DemoSeedFactory } from '@/services/storage/demo-data-store';
 
+import { DEMO_SEED_VERSION } from './demo-seed-version';
 import { SeededRandom } from './seeded-random';
 
 /**
@@ -63,8 +64,8 @@ import { SeededRandom } from './seeded-random';
  * - faturas são pagas com o total calculado pelas regras de cartão;
  * - aportes em metas acompanham transferências para a poupança.
  */
-/** v2 (Fase 4): inclui recorrências, que geram automaticamente as próximas ocorrências. */
-export const DEMO_SEED_VERSION = 2;
+
+export { DEMO_SEED_VERSION };
 
 const ACC = {
   checking: 'acc-corrente',

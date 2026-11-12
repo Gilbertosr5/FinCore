@@ -15,43 +15,48 @@ escreve em **português do Brasil**; responda sempre em pt-BR.
 - O que já foi entregue, testes e problemas conhecidos: [`PROJECT_STATUS.md`](./PROJECT_STATUS.md)
 - **Todas as pendências acumuladas** (fases restantes, itens adiados, backend, decisões a confirmar): [`PENDENCIAS.md`](./PENDENCIAS.md)
 - Prompt pronto para abrir uma nova sessão: [`docs/PROMPT_NOVA_SESSAO.md`](./docs/PROMPT_NOVA_SESSAO.md)
-- Decisões arquiteturais: [`docs/adr/`](./docs/adr/) (0001–0013)
+- Decisões arquiteturais: [`docs/adr/`](./docs/adr/) (0001–0014); segurança do front e headers do servidor: [`docs/seguranca.md`](./docs/seguranca.md)
 - Contratos HTTP com o backend futuro: [`docs/api-contract.md`](./docs/api-contract.md),
   [`docs/auth-contract.md`](./docs/auth-contract.md)
 
 ## 2. Estado atual
 
-| Fase | Descrição                                                             | Status                                                                                        |
-| ---- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| 1–4  | Fundação, autenticação/layout, dashboard, gestão financeira           | ✅ (commits "Fase 1 e Fase 2", "Fase 3", "Fase 4")                                            |
-| 5–7  | Cartões e orçamentos; metas e planejamento; investimentos             | ✅ concluídas em 11/11/2026 — **não commitadas** (junto com a Fase 8)                         |
-| 8    | Calendário e relatórios (eventos derivados, 11 relatórios, CSV e PDF) | ✅ concluída em 11/11/2026 — **não commitada** (o usuário faz o commit; confira `git status`) |
-| 9    | Finalização e qualidade                                               | ⏳ **próxima**                                                                                |
+| Fase | Descrição                                                                    | Status                                                                                        |
+| ---- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1–4  | Fundação, autenticação/layout, dashboard, gestão financeira                  | ✅ (commits "Fase 1 e Fase 2", "Fase 3", "Fase 4")                                            |
+| 5–8  | Cartões/orçamentos; metas/planejamento; investimentos; calendário/relatórios | ✅ concluídas em 11/11/2026 (commitadas pelo usuário)                                         |
+| 9    | Finalização e qualidade (a11y, performance, CSP, erros, busca, exportação)   | ✅ concluída em 12/11/2026 — **não commitada** (o usuário faz o commit; confira `git status`) |
 
-Última verificação completa: `npm run check` (508 testes), `npm run build` e
-`npm run test:e2e` (39 aprovados, 1 ignorado de propósito) — tudo verde.
-Detalhes do que existe: [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
+**As 9 fases do plano estão entregues.** Última verificação completa: `npm run check`
+(48 arquivos, 517 testes), `npm run build` (chunk `App` 231 kB / 66 kB gzip) e
+`npm run test:e2e` (desktop + celular, incluindo auditoria axe e CSP; 1 teste ignorado de
+propósito) — tudo verde. Detalhes: [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
 
-### Fase 9 — roteiro sugerido (Finalização e qualidade)
+### ▶ PRÓXIMO PASSO: finalizar a integração com o backend e validar (definido pelo usuário em 12/11/2026)
 
-Requisitos em [`docs/ROADMAP.md`](./docs/ROADMAP.md#fase-9--finalização-e-qualidade) e
-pendências técnicas em [`PENDENCIAS.md`](./PENDENCIAS.md). Todos os módulos estão
-entregues; a fase é de **revisão**, não de funcionalidades novas grandes.
+O backend já existe em `../fincore-api` (Node + Fastify + Drizzle, leia o
+`../fincore-api/README.md`; portão: `npm run check` e `npm run build` lá dentro). A
+integração básica foi verificada à mão em 11/11 (ver "Integração com o backend" em
+`PENDENCIAS.md`). Roteiro sugerido:
 
-- [ ] **Acessibilidade**: auditoria (axe/Lighthouse) em todas as rotas, desktop e celular,
-      temas claro e escuro; navegação por teclado (grade do calendário, menus, diálogos);
-      contraste dos tons de alerta; foco após fechar diálogos
-- [ ] **Performance**: carregar o seed de demonstração e o dashboard sob demanda (chunk
-      `App` ~339 kB); medir com o build de produção; memoização dos cálculos pesados
-      (relatórios com 5 anos, carteira); revisar consultas que leem tudo
-- [ ] **Segurança**: revisar CSP/headers do build, `npm audit` (dev), dados no IndexedDB,
-      exportações (injeção em CSV já tratada), mensagens de erro
-- [ ] **Tratamento de erros**: estados de erro/repetição em todas as telas; erros de
-      gravação no IndexedDB; testes dos adaptadores REST (fake HTTP)
-- [ ] **Pendências pequenas** de `PENDENCIAS.md` que cabem na fase (ex.: busca global com
-      entidades, breadcrumbs gerais, Configurações: moeda/formato de data/fuso/exportar dados)
-- [ ] **E2E**: revisar a suíte (fluxos ponta a ponta por módulo), estabilidade e tempo
-- [ ] **Documentação final**: README, guia de arquitetura, contratos, ADR 0014; este arquivo
+- [ ] Subir os dois lados (`fincore-api`: `npm run dev`; `fincore`: `npm run dev:api`) e
+      rodar os portões de qualidade de ambos para confirmar a base
+- [ ] **Fechar lacunas do backend**: validar no pagamento de fatura o valor máximo e a fatura
+      futura; recusar resgate acima do valor da posição (mesmas regras dos ADRs 0010/0012)
+- [ ] **Endpoints atômicos** para aporte de meta + transferência e movimentação de
+      investimento + lançamento (hoje o cliente compensa); ajustar os `Api*Repository`
+- [ ] **E2E no modo API**: projeto do Playwright que sobe a API (PGlite) e roda os fluxos
+      principais (cadastro/login, lançamentos, cartões/fatura, orçamento, meta com
+      transferência, investimento, relatórios, busca Ctrl+K e exportação JSON)
+- [ ] **Testes dos adaptadores REST** com HTTP falso (erros 4xx/5xx, 401 → sessão
+      expirada, 429, validação Zod da resposta)
+- [ ] Validar no navegador (desktop/celular, claro/escuro) todos os módulos contra a API
+      e registrar o resultado em `PROJECT_STATUS.md`; decisões em ADR 0015
+- [ ] Atualizar `docs/api-contract.md`, `PENDENCIAS.md` e este arquivo
+
+Depois disso (ver [`PENDENCIAS.md`](./PENDENCIAS.md)): Configurações (moeda, formato de
+data, fuso), exclusão de conta/sessões/notificações no servidor e deploy com os headers
+de [`docs/seguranca.md`](./docs/seguranca.md).
 
 ## 3. Como rodar
 
@@ -68,6 +73,19 @@ navegador e podem ser recriados em Configurações → Restaurar dados.
 Navegador interno do app: `FinProject/.claude/launch.json` tem a configuração
 `fincore-dev` (roda `npm run dev --prefix fincore`). Se o HMR ficar em estado
 estranho após muitas edições, reinicie o servidor.
+
+### Modo integrado com o backend real (`../fincore-api`)
+
+```bash
+cd fincore-api && npm install && npm run dev   # API em http://localhost:8080 (PGlite, sem instalar nada)
+cd fincore && npm run dev:api                  # front em http://localhost:5180 (.env.api)
+```
+
+O Vite encaminha `/api` para `:8080` (`server.proxy` em `vite.config.ts`; outro destino:
+`FINCORE_API_URL`). Front e API ficam na **mesma origem** — obrigatório, porque o axios só
+envia `X-XSRF-TOKEN` para a mesma origem. Não há usuário de demonstração: crie uma conta
+em `/cadastro` (recebe 14 categorias padrão). Configurações do navegador interno:
+`fincore-api` e `fincore-dev-api`. Detalhes do backend: `../fincore-api/README.md`.
 
 ## 4. Portão de qualidade (obrigatório ao fim de cada fase)
 
@@ -149,7 +167,8 @@ suporta 10), Vite 8, React 19, React Router 8, Tailwind 4, Vitest 5, Recharts 3,
 - **Recharts no carregamento inicial:** o `AppLayout` importa `@/features/dashboard` (central de
   notificações) de forma imediata. Não reexporte componentes de gráfico por índices de
   feature: gráficos compartilhados ficam em `components/data-display` (ex.: `TrendChart`).
-  Confira o tamanho do chunk `App` no `npm run build` (hoje ~381 kB).
+  Confira o tamanho do chunk `App` no `npm run build` (hoje ~231 kB; o seed e o Dexie
+  são importados sob demanda — não os importe de forma estática na composição).
 - **Planejamento** não grava nada: `usePlanningSnapshot` lê os dados e as páginas
   calculam projeções com funções puras (`buildBalanceProjection` etc.) em `useMemo`.
   Memoize entradas derivadas (cenário, compra) para não precisar de `eslint-disable`.
@@ -176,13 +195,25 @@ suporta 10), Vite 8, React 19, React Router 8, Tailwind 4, Vitest 5, Recharts 3,
 - **Fatura aberta** = `getOpenInvoiceMonth(card, hoje)` (mês em que uma compra de hoje
   entraria). Pagamentos de fatura são transações `card_payment` — use os casos de uso de
   cartões, nunca os de Transações (que recusam editá-las).
+- **Acessibilidade no E2E** (`tests/e2e/accessibility.spec.ts`): axe em todas as rotas, nos
+  dois temas. Rota nova → inclua na lista. Violação de contraste = ajuste o **token** em
+  `globals.css` (nunca cor solta); o tema claro é aplicado gravando
+  `fincore:theme` com `version: 1` no `localStorage`.
+- **Tabelas largas**: `Table` vira região rolável focável sozinha; passe `scrollLabel` com
+  um nome útil. `tabIndex` em elemento não interativo só com `role="region"`/`tabpanel`.
+- **CSP só existe no build** (`build/csp-plugin.ts`): script inline novo no `index.html`
+  quebra em produção (o hash é calculado só do script de tema). Teste com
+  `npm run build` + E2E (`security.spec.ts`).
+- **Busca global**: o `CommandSearch` (camada `components`) recebe a fonte por
+  `CommandSearchSourceContext`; novas entidades entram em `features/search`.
 
 ## 9. Para retomar
 
-Diga ao assistente: **"Leia `fincore/CONTINUAR.md` e inicie a Fase 9"** (ou a
-próxima fase pendente). Ele deve:
+Todas as fases estão concluídas. Para continuar, diga ao assistente o que fazer a partir de
+**Próximos passos** (seção 2) ou de `PENDENCIAS.md`. O próximo combinado é
+**"finalizar a integração com o backend e validar"** (roteiro na seção 2). Ele deve:
 
 1. ler este arquivo, `PENDENCIAS.md`, `docs/ROADMAP.md` e `PROJECT_STATUS.md`;
 2. rodar `git status` e `npm run check` para confirmar a base;
-3. seguir o checklist da fase atual;
+3. documentar decisões relevantes em um novo ADR (próximo: 0015);
 4. fechar com o portão de qualidade e atualizar a documentação.
